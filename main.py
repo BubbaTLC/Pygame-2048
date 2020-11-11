@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import math
 import random
+# pylint: disable=no-member
 
 # * Global Variables * #
 HEIGHT = 4
@@ -12,6 +13,11 @@ CHOICE = [2,4]
 
 END_TILE = 2048
 
+TILE_SIZE = 50
+SCREEN_WIDTH = TILE_SIZE * (WIDTH + 10)
+SCREEN_HEIGHT = TILE_SIZE * ((HEIGHT + 1) + 10)
+
+SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
 
 
 def create_board():
@@ -75,6 +81,7 @@ def move_left(board, score):
     """
     This function will shift the tiles to the left.
     """
+    tempB = board.copy()
 
     for r in range(0, len(board)-1, 4):
         for c in range(0, WIDTH-1, 1):
@@ -97,9 +104,21 @@ def move_left(board, score):
                 board[r+(c+1)] = 0
                 score += board[r+(c)]
 
+    compare = tempB == board
+
+    if not is_game_over(board) and not compare.all():
+        place_tile(board)
+
+
     return score
     
 def move_right(board, score):
+    """
+    This function will shifts the tiles to the right.
+    """
+
+    tempB = board.copy()
+
     for r in range(len(board)-1, 0, -4):
         for c in range(0, WIDTH-1, 1):
             if board[r-(c)] == board[r-(c+1)]:
@@ -122,9 +141,21 @@ def move_right(board, score):
                 board[r-(c+1)] = 0
                 score += board[r-(c)]
 
+    compare = tempB == board
+
+    if not is_game_over(board) and not compare.all():
+        place_tile(board)
+
+
     return score
 
 def move_up(board, score):
+    """
+    This function will shifts the tiles up.
+    """
+
+    tempB = board.copy()
+
     for c in range(len(board)-HEIGHT):
         if board[c] == board[c+HEIGHT]:
             board[c] = board[c] + board[c+HEIGHT]
@@ -143,9 +174,20 @@ def move_up(board, score):
             board[c+HEIGHT] = 0
             score += board[c]
 
+    compare = tempB == board
+
+    if not is_game_over(board) and not compare.all():
+        place_tile(board)
+
+
     return score
 
 def move_down(board, score):
+    """
+    This function will shifts the tiles down.
+    """
+    tempB = board.copy()
+
     for c in range(len(board)-1, HEIGHT-1, -1):
         if board[c] == board[c-HEIGHT]:
             board[c] = board[c] + board[c-HEIGHT]
@@ -164,63 +206,72 @@ def move_down(board, score):
             board[c-HEIGHT] = 0
             score += board[c]
 
+    compare = tempB == board
+
+    if not is_game_over(board) and not compare.all():
+        place_tile(board)
+
     return score
 
-
 def is_game_over(board):
+    """
+        This function returns if the game is over.
+    """
     if len(np.where(board == END_TILE)[0]):
         return True
-
     return not can_move(board)
 
 def print_board(board, score):
+    """
+    This functions prints the board and the score to the console.
+    """
     print(f"Score: {score}")
     print(board.copy().reshape(WIDTH,HEIGHT))
             
-
 if __name__ == "__main__":
+    # * Initialize Game * #
     gameOver = False
     score = 0
     board = create_board()
     initialize_game(board)
     print_board(board, score)
+
+    # * Initialize Graphics * #
+    pygame.init()
+    pygame.display.init()
+    screen = pygame.display.set_mode(SCREEN_SIZE)
+    
+
+    # TODO: Fix bug where 4 in a row combine into one tile. Could be considered as a feature.
     
     # * Game Loop * #
     while not gameOver:
-        move = input("(W)UP\t(S)Down\t(A)Left\t(D)Right\n")
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_w or event.key == pygame.K_UP: 
+                    score = move_up(board, score)
+                    print_board(board, score)
+
+                if event.key == pygame.K_s or event.key == pygame.K_DOWN: 
+                    score = move_down(board, score)
+                    print_board(board, score)
+
+                if event.key == pygame.K_a or event.key == pygame.K_LEFT: 
+                    score = move_left(board, score)
+                    print_board(board, score)
+
+                if event.key == pygame.K_d or event.key == pygame.K_RIGHT: 
+                    score = move_right(board, score)
+                    print_board(board, score)
+        
+
         if not is_game_over(board):
             gameOver = False
         else:
             gameOver = True
-
-        if move == 'w' or move == 'W': 
-            score = move_up(board, score)
-            if not is_game_over(board):
-                place_tile(board)
-            else:
-                gameOver = True
-
-        elif move == 's' or move == 'S': 
-            score = move_down(board, score)
-            if not is_game_over(board):
-                place_tile(board)
-            else:
-                gameOver = True
-
-        elif move == 'a' or move == 'A': 
-            score = move_left(board, score)
-            if not is_game_over(board):
-                place_tile(board)
-            else:
-                gameOver = True
-
-        elif move == 'd' or move == 'D': 
-            score = move_right(board, score)
-            if not is_game_over(board):
-                place_tile(board)
-            else:
-                gameOver = True
-
-        else:
-            print("Invalid Command")
-        print_board(board, score)
+        if gameOver:
+                    pygame.time.wait(3000)
+    
