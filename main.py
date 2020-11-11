@@ -10,6 +10,10 @@ WIDTH = 4
 
 CHOICE = [2,4]
 
+END_TILE = 2048
+
+
+
 def create_board():
     """
     This function creates a board matrix of 0's
@@ -30,10 +34,10 @@ def initialize_game(board):
     # board[2] = tile1
     # board[3] = tile2
     # np.random.shuffle(board)
-    board[0] = 2
-    board[1] = 2
-    board[2] = 2
-    board[3] = 2
+    board[3] = 8
+    board[7] = 8
+    board[11] = 8
+    board[15] = 8
 
 def place_tile(board):
     """
@@ -67,7 +71,7 @@ def can_move(board):
     
     return False
 
-def move_left(board):
+def move_left(board, score):
     """
     This function will shift the tiles to the left.
     """
@@ -77,6 +81,7 @@ def move_left(board):
             if board[r+(c)] == board[r+(c+1)]:
                 board[r+(c)] = board[r+(c)] + board[r+(c+1)]
                 board[r+(c+1)] = 0
+                score += board[r+(c)]
 
     for i in range(WIDTH-1):
         for r in range(0, len(board)-1, 4):
@@ -90,16 +95,17 @@ def move_left(board):
             if board[r+(c)] == board[r+(c+1)]:
                 board[r+(c)] = board[r+(c)] + board[r+(c+1)]
                 board[r+(c+1)] = 0
+                score += board[r+(c)]
 
+    return score
     
-    
-    
-def move_right(board):
+def move_right(board, score):
     for r in range(len(board)-1, 0, -4):
         for c in range(0, WIDTH-1, 1):
             if board[r-(c)] == board[r-(c+1)]:
                 board[r-(c)] = board[r-(c)] + board[r-(c+1)]
                 board[r-(c+1)] = 0
+                score += board[r-(c)]
 
     for i in range(WIDTH-1):
         for r in range(len(board)-1, 0, -4):
@@ -114,12 +120,16 @@ def move_right(board):
             if board[r-(c)] == board[r-(c+1)]:
                 board[r-(c)] = board[r-(c)] + board[r-(c+1)]
                 board[r-(c+1)] = 0
+                score += board[r-(c)]
 
-def move_up(board):
+    return score
+
+def move_up(board, score):
     for c in range(len(board)-HEIGHT):
         if board[c] == board[c+HEIGHT]:
             board[c] = board[c] + board[c+HEIGHT]
             board[c+HEIGHT] = 0
+            score += board[c]
 
     for i in range(WIDTH-1):
         for c in range(len(board)-HEIGHT):
@@ -131,12 +141,16 @@ def move_up(board):
         if board[c] == board[c+HEIGHT]:
             board[c] = board[c] + board[c+HEIGHT]
             board[c+HEIGHT] = 0
+            score += board[c]
 
-def move_down(board):
+    return score
+
+def move_down(board, score):
     for c in range(len(board)-1, HEIGHT-1, -1):
         if board[c] == board[c-HEIGHT]:
             board[c] = board[c] + board[c-HEIGHT]
             board[c-HEIGHT] = 0
+            score += board[c]
 
     for i in range(HEIGHT-1):
         for c in range(len(board)-1, HEIGHT-1, -1):
@@ -148,47 +162,65 @@ def move_down(board):
         if board[c] == board[c-HEIGHT]:
             board[c] = board[c] + board[c-HEIGHT]
             board[c-HEIGHT] = 0
+            score += board[c]
+
+    return score
 
 
 def is_game_over(board):
-    if len(np.where(board == 0)[0]) == 0:
+    if len(np.where(board == END_TILE)[0]):
         return True
-    
-    return False
 
-def print_board(board):
+    return not can_move(board)
+
+def print_board(board, score):
+    print(f"Score: {score}")
     print(board.copy().reshape(WIDTH,HEIGHT))
             
 
 if __name__ == "__main__":
     gameOver = False
+    score = 0
     board = create_board()
     initialize_game(board)
-    print_board(board)
+    print_board(board, score)
     
     # * Game Loop * #
     while not gameOver:
         move = input("(W)UP\t(S)Down\t(A)Left\t(D)Right\n")
+        if not is_game_over(board):
+            gameOver = False
+        else:
+            gameOver = True
+
         if move == 'w' or move == 'W': 
-            move_up(board)
+            score = move_up(board, score)
             if not is_game_over(board):
                 place_tile(board)
+            else:
+                gameOver = True
 
         elif move == 's' or move == 'S': 
-            move_down(board)
+            score = move_down(board, score)
             if not is_game_over(board):
                 place_tile(board)
+            else:
+                gameOver = True
 
         elif move == 'a' or move == 'A': 
-            move_left(board)
+            score = move_left(board, score)
             if not is_game_over(board):
                 place_tile(board)
+            else:
+                gameOver = True
 
         elif move == 'd' or move == 'D': 
-            move_right(board)
+            score = move_right(board, score)
             if not is_game_over(board):
                 place_tile(board)
+            else:
+                gameOver = True
 
         else:
             print("Invalid Command")
-        print_board(board)
+        print_board(board, score)
