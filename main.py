@@ -29,7 +29,11 @@ def initialize_game(board):
     tile2 = random.choice(CHOICE)
     board[2] = tile1
     board[3] = tile2
-    # np.random.shuffle(board)
+    np.random.shuffle(board)
+    # board[0] = 2
+    # board[1] = 2
+    # board[2] = 2
+    # board[3] = 2
 
 def place_tile(board):
     """
@@ -67,31 +71,40 @@ def move_left(board):
     """
     This function will shift the tiles to the left.
     """
-    for r in range(len(board)-1):
-        if r+1 % WIDTH == 0:
-            continue
-        if board[r] == board[r+1]:
-            board[r] = board[r] + board[r+1]
-            board[r+1] = 0
-
     for r in range(0, len(board)-1, 4):
-        for c in range(WIDTH-1, 0, -1):
-            if board[r+(c-1)] == 0:
-                board[r+(c-1)] = board[r+(c)]
-                board[r+(c)] = 0
-    
-    
+            for c in range(WIDTH-1, 0, -1):
+                if board[r+(c-1)] == board[r+(c-1)+1]:
+                    board[r+(c-1)] = board[r+(c-1)] + board[r+(c-1)+1]
+                    board[r+(c-1)+1] = 0
+
+    for i in range(WIDTH-1):
+        for r in range(0, len(board)-1, 4):
+            for c in range(WIDTH-1, 0, -1):
+                if board[r+(c-1)] == 0:
+                    board[r+(c-1)] = board[r+(c)]
+                    board[r+(c)] = 0
 
     
     
     
-def move_right():
+def move_right(board):
+    for r in range(len(board)-1, 0, -4):
+            for c in range(WIDTH-1, 0, -1):
+                if board[r-(c-1)] == board[r-(c-1)-1]:
+                    board[r-(c-1)] = board[r-(c-1)] + board[r-(c-1)-1]
+                    board[r-(c-1)-1] = 0
+
+    for i in range(WIDTH-1):
+        for r in range(len(board)-1, 0, -4):
+            for c in range(WIDTH-1, 0, -1):
+                if board[r-(c-1)] == 0:
+                    board[r-(c-1)] = board[r-(c)]
+                    board[r-(c)] = 0
+
+def move_up(board):
     pass
 
-def move_up():
-    pass
-
-def move_down():
+def move_down(board):
     pass
 
 
@@ -106,9 +119,22 @@ def print_board(board):
             
 
 if __name__ == "__main__":
+    gameOver = False
     board = create_board()
     initialize_game(board)
     print_board(board)
-    move_left(board)
-    print_board(board)
-
+    
+    # * Game Loop * #
+    while not gameOver:
+        move = input("(W)UP\t(S)Down\t(A)Left\t(D)Right\n")
+        if move == 'w' or move == 'W': 
+            move_up(board)
+        elif move == 's' or move == 'S': 
+            move_down(board)
+        elif move == 'a' or move == 'A': 
+            move_left(board)
+        elif move == 'd' or move == 'D': 
+            move_right(board)
+        else:
+            print("Invalid Command")
+        print_board(board)
