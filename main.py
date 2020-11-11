@@ -25,15 +25,15 @@ def initialize_game(board):
     """
     This function will randomly place the 2 tiles onto the board.
     """
-    tile1 = random.choice(CHOICE)
-    tile2 = random.choice(CHOICE)
-    board[2] = tile1
-    board[3] = tile2
-    np.random.shuffle(board)
-    # board[0] = 2
-    # board[1] = 2
-    # board[2] = 2
-    # board[3] = 2
+    # tile1 = random.choice(CHOICE)
+    # tile2 = random.choice(CHOICE)
+    # board[2] = tile1
+    # board[3] = tile2
+    # np.random.shuffle(board)
+    board[0] = 2
+    board[1] = 2
+    board[2] = 2
+    board[3] = 2
 
 def place_tile(board):
     """
@@ -71,41 +71,83 @@ def move_left(board):
     """
     This function will shift the tiles to the left.
     """
+
     for r in range(0, len(board)-1, 4):
-            for c in range(WIDTH-1, 0, -1):
-                if board[r+(c-1)] == board[r+(c-1)+1]:
-                    board[r+(c-1)] = board[r+(c-1)] + board[r+(c-1)+1]
-                    board[r+(c-1)+1] = 0
+        for c in range(0, WIDTH-1, 1):
+            if board[r+(c)] == board[r+(c+1)]:
+                board[r+(c)] = board[r+(c)] + board[r+(c+1)]
+                board[r+(c+1)] = 0
 
     for i in range(WIDTH-1):
         for r in range(0, len(board)-1, 4):
-            for c in range(WIDTH-1, 0, -1):
-                if board[r+(c-1)] == 0:
-                    board[r+(c-1)] = board[r+(c)]
-                    board[r+(c)] = 0
+            for c in range(0, WIDTH-1, 1):
+                if board[r+(c)] == 0:
+                    board[r+(c)] = board[r+(c+1)]
+                    board[r+(c+1)] = 0
+
+    for r in range(0, len(board)-1, 4):
+        for c in range(0, WIDTH-1, 1):
+            if board[r+(c)] == board[r+(c+1)]:
+                board[r+(c)] = board[r+(c)] + board[r+(c+1)]
+                board[r+(c+1)] = 0
 
     
     
     
 def move_right(board):
     for r in range(len(board)-1, 0, -4):
-            for c in range(WIDTH-1, 0, -1):
-                if board[r-(c-1)] == board[r-(c-1)-1]:
-                    board[r-(c-1)] = board[r-(c-1)] + board[r-(c-1)-1]
-                    board[r-(c-1)-1] = 0
+        for c in range(0, WIDTH-1, 1):
+            if board[r-(c)] == board[r-(c+1)]:
+                board[r-(c)] = board[r-(c)] + board[r-(c+1)]
+                board[r-(c+1)] = 0
 
     for i in range(WIDTH-1):
         for r in range(len(board)-1, 0, -4):
-            for c in range(WIDTH-1, 0, -1):
-                if board[r-(c-1)] == 0:
-                    board[r-(c-1)] = board[r-(c)]
-                    board[r-(c)] = 0
+            for c in range(0, WIDTH-1, 1):
+                if board[r-(c)] == 0:
+                    board[r-(c)] = board[r-(c+1)]
+                    board[r-(c+1)] = 0
+
+
+    for r in range(len(board)-1, 0, -4):
+        for c in range(0, WIDTH-1, 1):
+            if board[r-(c)] == board[r-(c+1)]:
+                board[r-(c)] = board[r-(c)] + board[r-(c+1)]
+                board[r-(c+1)] = 0
 
 def move_up(board):
-    pass
+    for c in range(len(board)-HEIGHT):
+        if board[c] == board[c+HEIGHT]:
+            board[c] = board[c] + board[c+HEIGHT]
+            board[c+HEIGHT] = 0
+
+    for i in range(WIDTH-1):
+        for c in range(len(board)-HEIGHT):
+            if board[c] == 0:
+                board[c] = board[c+HEIGHT]
+                board[c+HEIGHT] = 0
+
+    for c in range(len(board)-HEIGHT):
+        if board[c] == board[c+HEIGHT]:
+            board[c] = board[c] + board[c+HEIGHT]
+            board[c+HEIGHT] = 0
 
 def move_down(board):
-    pass
+    for c in range(len(board)-1, HEIGHT-1, -1):
+        if board[c] == board[c-HEIGHT]:
+            board[c] = board[c] + board[c-HEIGHT]
+            board[c-HEIGHT] = 0
+
+    for i in range(HEIGHT-1):
+        for c in range(len(board)-1, HEIGHT-1, -1):
+            if board[c] == 0:
+                board[c] = board[c-HEIGHT]
+                board[c-HEIGHT] = 0
+
+    for c in range(len(board)-1, HEIGHT-1, -1):
+        if board[c] == board[c-HEIGHT]:
+            board[c] = board[c] + board[c-HEIGHT]
+            board[c-HEIGHT] = 0
 
 
 def is_game_over(board):
@@ -129,12 +171,24 @@ if __name__ == "__main__":
         move = input("(W)UP\t(S)Down\t(A)Left\t(D)Right\n")
         if move == 'w' or move == 'W': 
             move_up(board)
+            if not is_game_over(board):
+                place_tile(board)
+
         elif move == 's' or move == 'S': 
             move_down(board)
+            if not is_game_over(board):
+                place_tile(board)
+
         elif move == 'a' or move == 'A': 
             move_left(board)
+            if not is_game_over(board):
+                place_tile(board)
+
         elif move == 'd' or move == 'D': 
             move_right(board)
+            if not is_game_over(board):
+                place_tile(board)
+
         else:
             print("Invalid Command")
         print_board(board)
