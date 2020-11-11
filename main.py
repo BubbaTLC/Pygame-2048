@@ -27,9 +27,9 @@ def initialize_game(board):
     """
     tile1 = random.choice(CHOICE)
     tile2 = random.choice(CHOICE)
-    board[0] = tile1
-    board[1] = tile2
-    np.random.shuffle(board)
+    board[2] = tile1
+    board[3] = tile2
+    # np.random.shuffle(board)
 
 def place_tile(board):
     """
@@ -54,13 +54,46 @@ def can_move(board):
         if board[r] == board[r+WIDTH]:
             return True
     
+    # Check if the tile to the side is the same
     for r in range(len(board)-1):
+        if r+1 % 4 == 0: # don't compare the right edge with next col
+            continue
         if board[r] == board[r+1]:
             return True
     
     return False
 
-            
+def move_left(board):
+    """
+    This function will shift the tiles to the left.
+    """
+    for r in range(len(board)-1):
+        if r+1 % WIDTH == 0:
+            continue
+        if board[r] == board[r+1]:
+            board[r] = board[r] + board[r+1]
+            board[r+1] = 0
+
+    for r in range(0, len(board)-1, 4):
+        for c in range(WIDTH-1, 0, -1):
+            if board[r+(c-1)] == 0:
+                board[r+(c-1)] = board[r+(c)]
+                board[r+(c)] = 0
+    
+    
+
+    
+    
+    
+def move_right():
+    pass
+
+def move_up():
+    pass
+
+def move_down():
+    pass
+
 
 def is_game_over(board):
     if len(np.where(board == 0)[0]) == 0:
@@ -76,6 +109,6 @@ if __name__ == "__main__":
     board = create_board()
     initialize_game(board)
     print_board(board)
-    print(is_game_over(board))
-    print(can_move(board))
+    move_left(board)
+    print_board(board)
 
