@@ -253,7 +253,7 @@ def print_board(board, score):
     print(f"Score: {score}")
     print(board.copy().reshape(WIDTH,HEIGHT))
 
-def draw_board(board, score):
+def draw_board(board, score, highScr):
     """
     This function draws the board to the screen
     """
@@ -271,11 +271,19 @@ def draw_board(board, score):
                 screen.blit(label, lblRect)
 
     # Display the score
-    label = ariel_25.render(f'Score: {score}', 1, GAME_COLORS['LIGHT_GRAY'])
-    screen.blit(label, (20,TILE_SIZE))
+    if score > highScr:
+        highScr = score
 
+    lblScore = ariel_25.render(f'Score: {score}', 1, GAME_COLORS['LIGHT_GRAY'])
+    lblHighscore = ariel_25.render(f'Highscore: {highScr}', 1, GAME_COLORS['LIGHT_GRAY'])
+    screen.blit(lblScore, (20,TILE_SIZE))
+    screen.blit(lblHighscore, (20,TILE_SIZE-25))
+
+    # Display Controls
     undo = ariel_25.render(f'Undo: CTRL + Z', 1, GAME_COLORS['LIGHT_GRAY'])
-    screen.blit(undo, (SCREEN_WIDTH//2,TILE_SIZE))
+    screen.blit(undo, ((SCREEN_WIDTH//2)+35,TILE_SIZE))
+    undo = ariel_25.render(f'New Game: CTRL + R', 1, GAME_COLORS['LIGHT_GRAY'])
+    screen.blit(undo, ((SCREEN_WIDTH//2)+35,TILE_SIZE-25))
 
     # Display the Game title
     title = ariel_55.render("2048 In Python!", 1, GAME_COLORS['LIGHT_GRAY'])
@@ -300,18 +308,35 @@ def draw_button(centerX, centerY, width, height, text="button"):
     screen.blit(label, lblRect)
 
     return rect1
+
+def write_line(file, line):
+    print("Writing to file")
+    f = open(file, "wt")
+    f.writelines(f"{line}")
+    f.close()
+
+def read_line(file):
+    f = open(file, "rt")
+    line = f.readline()
+    f.close()
+    return line
                       
 if __name__ == "__main__":
     # * Initialize Game * #
     gameOver = False
     running = True
+    highScore = 0
     score = 0
     oldScore = score
     board = create_board()
     initialize_game(board)
     oldBoard = board.copy()
-    
-    print_board(board, score)
+
+    try:
+        highScore = int(read_line('highscore.txt'))
+    except ValueError:
+        highScore = 0
+    print(highScore)
 
     # * Initialize Graphics * #
     pygame.init()
@@ -323,7 +348,7 @@ if __name__ == "__main__":
     ariel_55 = pygame.font.SysFont("ariel", 55)
     ariel_25 = pygame.font.SysFont("ariel", 25)
     screen = pygame.display.set_mode(SCREEN_SIZE)
-    draw_board(board, score)
+    draw_board(board, score, highScore)
     pygame.display.update()
 
     button = Rect(0,0,0,0)
@@ -331,25 +356,27 @@ if __name__ == "__main__":
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                if highScore <= score:
+                    write_line('highscore.txt',score)
                 sys.exit()
 
             if event.type == pygame.KEYDOWN and not gameOver:
-                if event.key == pygame.K_w or event.key == pygame.K_UP:
+                if event.key == pygame.K_w or event.key == pygame.K_UP: # Up
                     oldBoard = board.copy()
                     oldScore = score
                     score = move_up(board, score)
 
-                if event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                if event.key == pygame.K_s or event.key == pygame.K_DOWN: # Down
                     oldBoard = board.copy() 
                     oldScore = score
                     score = move_down(board, score)
 
-                if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                if event.key == pygame.K_a or event.key == pygame.K_LEFT: # Left
                     oldBoard = board.copy() 
                     oldScore = score
                     score = move_left(board, score)
 
-                if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                if event.key == pygame.K_d or event.key == pygame.K_RIGHT: # Right
                     oldBoard = board.copy() 
                     oldScore = score
                     score = move_right(board, score)
@@ -357,16 +384,24 @@ if __name__ == "__main__":
                 if event.key == pygame.K_z and pygame.key.get_mods() & pygame.KMOD_CTRL: # Undo
                     board = oldBoard
                     score = oldScore
-                    print("UNDO!")
 
-                print_board(board, score)
-                draw_board(board, score)
+                # New Game
+                if event.key == pygame.K_r and pygame.key.get_mods() & pygame.KMOD_CTRL: # New Game
+                    gameOver = False
+                    board = create_board()
+                    score = 0
+                    initialize_game(board)
+                    oldBoard = board.copy()
+                    oldScore = score
+                    draw_board(board, score, highScore)
+                    pygame.display.update()
+
+                draw_board(board, score, highScore)
                 pygame.display.update()
 
                 if is_game_over(board):
                     gameOver = True
 
-                # gameOver = True
                 
                 if gameOver: # Endgame screen
                     # Tint the background
@@ -375,27 +410,38 @@ if __name__ == "__main__":
                     pygame.draw.rect(bg, GAME_COLORS['BLACK'], (0,0,SCREEN_WIDTH,SCREEN_HEIGHT))
                     screen.blit(bg, (0, 0))
 
+                    # Display game over text
                     labels = ["Game Over!", f"Your Score: {score}", f"Largest Tile: {board.max()}"]
                     for line in range(len(labels)):
                         label = ariel_55.render(labels[line],1, GAME_COLORS['LIGHT_GRAY'])
                         lblRect = label.get_rect(center=(SCREEN_WIDTH//2, (SCREEN_HEIGHT//3)+(line*45) ))
                         screen.blit(label, lblRect)
 
-                    # TODO: Ask the player to play again.
+                    # Display play again button
                     button = draw_button(SCREEN_WIDTH//2, (SCREEN_HEIGHT//3)*2, TILE_SIZE*2.5, TILE_SIZE, "Play Again")
 
                     pygame.display.update()
-                    print(f"Game Over\nYour Score Was: {score}\nHighest Tile Created: {board.max()}")
 
+                    if highScore <= score:
+                        write_line('highscore.txt',score)
+
+            # Click Play again
             if (event.type == pygame.MOUSEBUTTONDOWN and event.button ==1) and gameOver:
                 pos = pygame.mouse.get_pos()
                 if button.collidepoint(pos):
-                    print("Button Pressed")
+                    if highScore <= score:
+                        write_line('highscore.txt',score)
+                    try:
+                        highScore = int(read_line('highscore.txt'))
+                    except ValueError:
+                        highScore = 0
                     gameOver = False
                     board = create_board()
                     score = 0
                     initialize_game(board)
-                    draw_board(board, score)
+                    oldBoard = board.copy()
+                    oldScore = score
+                    draw_board(board, score, highScore)
                     pygame.display.update()
                     
                     

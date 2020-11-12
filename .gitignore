@@ -1,6 +1,9 @@
 # Visual Studio Code
 .vscode
 
+# auto-py-to-exe
+output
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
