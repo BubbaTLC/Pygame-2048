@@ -54,11 +54,17 @@ def initialize_game(board):
     """
     This function will randomly place the 2 tiles onto the board.
     """
-    tile1 = random.choice(CHOICE)
-    tile2 = random.choice(CHOICE)
-    board[2] = tile1
-    board[3] = tile2
-    np.random.shuffle(board)
+    # tile1 = random.choice(CHOICE)
+    # tile2 = random.choice(CHOICE)
+    # board[2] = tile1
+    # board[3] = tile2
+    # np.random.shuffle(board)
+
+    board[0] = 2
+    board[4] = 2
+    board[8] = 2
+    board[12] = 2
+
     # tiles = [ 2, 4, 8, 4, 4, 8, 4,  2, 64,  32,  16,   4, 16,  64, 256, 512]
     # for i in range(16):
     #     board[i] = tiles[i]
@@ -100,13 +106,6 @@ def move_left(board, score):
     """
     tempB = board.copy()
 
-    for r in range(0, len(board)-1, 4):
-        for c in range(0, WIDTH-1, 1):
-            if board[r+(c)] == board[r+(c+1)]:
-                board[r+(c)] = board[r+(c)] + board[r+(c+1)]
-                board[r+(c+1)] = 0
-                score += board[r+(c)]
-
     for i in range(WIDTH-1):
         for r in range(0, len(board)-1, 4):
             for c in range(0, WIDTH-1, 1):
@@ -120,6 +119,13 @@ def move_left(board, score):
                 board[r+(c)] = board[r+(c)] + board[r+(c+1)]
                 board[r+(c+1)] = 0
                 score += board[r+(c)]
+
+    for i in range(WIDTH-1):
+        for r in range(0, len(board)-1, 4):
+            for c in range(0, WIDTH-1, 1):
+                if board[r+(c)] == 0:
+                    board[r+(c)] = board[r+(c+1)]
+                    board[r+(c+1)] = 0
 
     compare = tempB == board
 
@@ -135,6 +141,13 @@ def move_right(board, score):
 
     tempB = board.copy()
 
+    for i in range(WIDTH-1):
+        for r in range(len(board)-1, 0, -4):
+            for c in range(0, WIDTH-1, 1):
+                if board[r-(c)] == 0:
+                    board[r-(c)] = board[r-(c+1)]
+                    board[r-(c+1)] = 0
+
     for r in range(len(board)-1, 0, -4):
         for c in range(0, WIDTH-1, 1):
             if board[r-(c)] == board[r-(c+1)]:
@@ -148,14 +161,6 @@ def move_right(board, score):
                 if board[r-(c)] == 0:
                     board[r-(c)] = board[r-(c+1)]
                     board[r-(c+1)] = 0
-
-
-    for r in range(len(board)-1, 0, -4):
-        for c in range(0, WIDTH-1, 1):
-            if board[r-(c)] == board[r-(c+1)]:
-                board[r-(c)] = board[r-(c)] + board[r-(c+1)]
-                board[r-(c+1)] = 0
-                score += board[r-(c)]
 
     compare = tempB == board
 
@@ -172,12 +177,6 @@ def move_up(board, score):
 
     tempB = board.copy()
 
-    for c in range(len(board)-HEIGHT):
-        if board[c] == board[c+HEIGHT]:
-            board[c] = board[c] + board[c+HEIGHT]
-            board[c+HEIGHT] = 0
-            score += board[c]
-
     for i in range(WIDTH-1):
         for c in range(len(board)-HEIGHT):
             if board[c] == 0:
@@ -189,6 +188,12 @@ def move_up(board, score):
             board[c] = board[c] + board[c+HEIGHT]
             board[c+HEIGHT] = 0
             score += board[c]
+
+    for i in range(WIDTH-1):
+        for c in range(len(board)-HEIGHT):
+            if board[c] == 0:
+                board[c] = board[c+HEIGHT]
+                board[c+HEIGHT] = 0
 
     compare = tempB == board
 
@@ -203,24 +208,23 @@ def move_down(board, score):
     This function will shifts the tiles down.
     """
     tempB = board.copy()
+    for i in range(HEIGHT-1):
+        for c in range(len(board)-1, HEIGHT-1, -1): # Move tiles
+            if board[c] == 0:
+                board[c] = board[c-HEIGHT]
+                board[c-HEIGHT] = 0
 
-    for c in range(len(board)-1, HEIGHT-1, -1):
+    for c in range(len(board)-1, HEIGHT-1, -1): # Combine tiles
         if board[c] == board[c-HEIGHT]:
             board[c] = board[c] + board[c-HEIGHT]
             board[c-HEIGHT] = 0
             score += board[c]
 
     for i in range(HEIGHT-1):
-        for c in range(len(board)-1, HEIGHT-1, -1):
+        for c in range(len(board)-1, HEIGHT-1, -1): # Move tiles
             if board[c] == 0:
                 board[c] = board[c-HEIGHT]
                 board[c-HEIGHT] = 0
-
-    for c in range(len(board)-1, HEIGHT-1, -1):
-        if board[c] == board[c-HEIGHT]:
-            board[c] = board[c] + board[c-HEIGHT]
-            board[c-HEIGHT] = 0
-            score += board[c]
 
     compare = tempB == board
 
@@ -293,7 +297,6 @@ if __name__ == "__main__":
     draw_board(board, score)
     pygame.display.update()
 
-    # TODO: Fix bug where 4 in a row combine into one tile. Could be considered as a feature.
     
     # * Game Loop * #
     while running:
