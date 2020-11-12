@@ -273,8 +273,7 @@ def draw_board(board, score):
     title = ariel_55.render("2048 In Python!", 1, GAME_COLORS['BLACK_LIGHT'])
     screen.blit(title, (20,20))
 
-            
-            
+                      
 if __name__ == "__main__":
     # * Initialize Game * #
     gameOver = False
@@ -323,7 +322,7 @@ if __name__ == "__main__":
                     oldScore = score
                     score = move_right(board, score)
 
-                if event.key == pygame.K_z and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                if event.key == pygame.K_z and pygame.key.get_mods() & pygame.KMOD_CTRL: # Undo
                     board = oldBoard
                     score = oldScore
                     print("UNDO!")
@@ -335,7 +334,7 @@ if __name__ == "__main__":
                 if is_game_over(board):
                     gameOver = True
                 
-                if gameOver:
+                if gameOver: # Endgame screen
                     labels = ["Game Over!", f"Your Score: {score}", f"Largest Tile: {board.max()}"]
                     for line in range(len(labels)):
                         label = ariel_55.render(labels[line],1, GAME_COLORS['BLACK_RED'])
@@ -343,6 +342,6 @@ if __name__ == "__main__":
                         screen.blit(label, lblRect)
 
                     pygame.display.update()
-
                     print(f"Game Over\nYour Score Was: {score}\nHighest Tile Created: {board.max()}")
+                    # TODO: Ask the player to play again.
     
