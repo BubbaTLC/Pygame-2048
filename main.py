@@ -23,7 +23,8 @@ GAME_COLORS = {
     "BLACK" : (0,0,0),
     "WHITE" : (255,255,255),
     "BLACK_LIGHT": (64,64,64),
-    "0": (204, 0, 0),
+    "BLACK_RED": (245,245,245),
+    "0": (88,88,88),
     "2": (204, 102, 0),
     "4": (204, 153, 0),
     "8": (204, 204, 0),
@@ -53,15 +54,14 @@ def initialize_game(board):
     """
     This function will randomly place the 2 tiles onto the board.
     """
-    # tile1 = random.choice(CHOICE)
-    # tile2 = random.choice(CHOICE)
-    # board[2] = tile1
-    # board[3] = tile2
-    # np.random.shuffle(board)
-    board[3] = 8
-    board[7] = 8
-    board[11] = 8
-    board[15] = 8
+    tile1 = random.choice(CHOICE)
+    tile2 = random.choice(CHOICE)
+    board[2] = tile1
+    board[3] = tile2
+    np.random.shuffle(board)
+    # tiles = [ 2, 4, 8, 4, 4, 8, 4,  2, 64,  32,  16,   4, 16,  64, 256, 512]
+    # for i in range(16):
+    #     board[i] = tiles[i]
 
 def place_tile(board):
     """
@@ -87,9 +87,10 @@ def can_move(board):
             return True
     
     # Check if the tile to the side is the same
-    for c in range(len(board)-HEIGHT):
-        if board[c] == board[c+HEIGHT]:
-            return True
+    for r in range(0, len(board)-1, 4):
+        for c in range(0, WIDTH-1, 1):
+            if board[r+(c)] == board[r+(c+1)]:
+                return True
     
     return False
 
@@ -124,7 +125,6 @@ def move_left(board, score):
 
     if not is_game_over(board) and not compare.all():
         place_tile(board)
-
 
     return score
     
@@ -235,7 +235,11 @@ def is_game_over(board):
     """
     if len(np.where(board == END_TILE)[0]):
         return True
-    return not can_move(board)
+
+    if can_move(board):
+        return False
+    
+    return True
 
 def print_board(board, score):
     """
@@ -244,27 +248,37 @@ def print_board(board, score):
     print(f"Score: {score}")
     print(board.copy().reshape(WIDTH,HEIGHT))
 
-
 def draw_board(board, score):
+    """
+    This function draws the board to the screen
+    """
     pygame.draw.rect(screen, GAME_COLORS['BLACK'], (0,0,SCREEN_WIDTH, SCREEN_HEIGHT)) # Background
-    # pygame.draw.rect(screen, GAME_COLORS['BLACK_LIGHT'], (10,30+TILE_SIZE, SCREEN_WIDTH-20, SCREEN_HEIGHT-40-TILE_SIZE))
-    tempBoard = board.copy().reshape(WIDTH,HEIGHT)
+    pygame.draw.rect(screen, GAME_COLORS['BLACK_LIGHT'], (10,30+TILE_SIZE, SCREEN_WIDTH-20, SCREEN_HEIGHT-40-TILE_SIZE)) # Tile background
+    tempBoard = board.copy().reshape(WIDTH,HEIGHT) 
+
+    # Display the tiles
     for c in range(WIDTH):
         for r in range(HEIGHT):
-            pygame.draw.rect(screen, GAME_COLORS['BLACK_LIGHT'], ((15)+(c*TILE_SIZE)+(c*10),(35+TILE_SIZE)+(r*TILE_SIZE)+(r*10), TILE_SIZE+5, TILE_SIZE+5))
-    for c in range(WIDTH):
-        for r in range(HEIGHT):
-            if tempBoard[r][c] != 0:
-                label = myFont.render(f'{tempBoard[r][c]}', 1, GAME_COLORS['BLACK'])
+            pygame.draw.rect(screen, GAME_COLORS[f'{tempBoard[r][c]}'], ((20)+(c*TILE_SIZE)+(c*10),(40+TILE_SIZE)+(r*TILE_SIZE)+(r*10), TILE_SIZE, TILE_SIZE))
+            if tempBoard[r][c] > 0:
+                label = ariel_55.render(f'{tempBoard[r][c]}', 1, GAME_COLORS['BLACK'])
                 lblRect = label.get_rect(center=(((20)+(c*TILE_SIZE)+(c*10))+(TILE_SIZE//2), ((40+TILE_SIZE)+(r*TILE_SIZE)+(r*10))+(TILE_SIZE//2)))
-                pygame.draw.rect(screen, GAME_COLORS[f'{tempBoard[r][c]}'], ((20)+(c*TILE_SIZE)+(c*10),(40+TILE_SIZE)+(r*TILE_SIZE)+(r*10), TILE_SIZE, TILE_SIZE))
                 screen.blit(label, lblRect)
+
+    # Display the score
+    label = ariel_25.render(f'Score: {score}', 1, GAME_COLORS['BLACK_LIGHT'])
+    screen.blit(label, (20,TILE_SIZE))
+
+    # Display the Game title
+    title = ariel_55.render("2048 In Python!", 1, GAME_COLORS['BLACK_LIGHT'])
+    screen.blit(title, (20,20))
 
             
             
 if __name__ == "__main__":
     # * Initialize Game * #
     gameOver = False
+    running = True
     score = 0
     board = create_board()
     initialize_game(board)
@@ -274,7 +288,8 @@ if __name__ == "__main__":
     pygame.init()
     pygame.display.init()
     pygame.font.init()
-    myFont = pygame.font.SysFont("ariel", 75)
+    ariel_55 = pygame.font.SysFont("ariel", 55)
+    ariel_25 = pygame.font.SysFont("ariel", 25)
     screen = pygame.display.set_mode(SCREEN_SIZE)
     draw_board(board, score)
     pygame.display.update()
@@ -282,34 +297,52 @@ if __name__ == "__main__":
     # TODO: Fix bug where 4 in a row combine into one tile. Could be considered as a feature.
     
     # * Game Loop * #
-    while not gameOver:
+    while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w or event.key == pygame.K_UP: 
+                if event.key == pygame.K_w or event.key == pygame.K_UP:
+                    oldBoard = board.copy()
+                    oldScore = score
                     score = move_up(board, score)
 
-                if event.key == pygame.K_s or event.key == pygame.K_DOWN: 
+                if event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                    oldBoard = board.copy() 
+                    oldScore = score
                     score = move_down(board, score)
 
-                if event.key == pygame.K_a or event.key == pygame.K_LEFT: 
+                if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                    oldBoard = board.copy() 
+                    oldScore = score
                     score = move_left(board, score)
 
-                if event.key == pygame.K_d or event.key == pygame.K_RIGHT: 
+                if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                    oldBoard = board.copy() 
+                    oldScore = score
                     score = move_right(board, score)
-                    
+
+                if event.key == pygame.K_z and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    board = oldBoard
+                    score = oldScore
+                    print("UNDO!")
+
                 print_board(board, score)
                 draw_board(board, score)
                 pygame.display.update()
 
-                if not is_game_over(board):
-                    gameOver = False
-                else:
+                if is_game_over(board):
                     gameOver = True
-
+                
                 if gameOver:
+                    labels = ["Game Over!", f"Your Score: {score}", f"Largest Tile: {board.max()}"]
+                    for line in range(len(labels)):
+                        label = ariel_55.render(labels[line],1, GAME_COLORS['BLACK_RED'])
+                        lblRect = label.get_rect(center=(SCREEN_WIDTH//2, (SCREEN_HEIGHT//2)+(line*45) ))
+                        screen.blit(label, lblRect)
+
+                    pygame.display.update()
+
                     print(f"Game Over\nYour Score Was: {score}\nHighest Tile Created: {board.max()}")
-                    pygame.time.wait(3000)
     
