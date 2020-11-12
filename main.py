@@ -1,4 +1,5 @@
 import pygame
+from pygame.locals import *
 import numpy as np
 import sys
 import math
@@ -22,8 +23,8 @@ SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
 GAME_COLORS = {
     "BLACK" : (0,0,0),
     "WHITE" : (255,255,255),
-    "BLACK_LIGHT": (64,64,64),
-    "BLACK_RED": (245,245,245),
+    "DARK_GRAY": (64,64,64),
+    "LIGHT_GRAY": (176,176,176),
     "0": (88,88,88),
     "2": (204, 102, 0),
     "4": (204, 153, 0),
@@ -54,16 +55,16 @@ def initialize_game(board):
     """
     This function will randomly place the 2 tiles onto the board.
     """
-    # tile1 = random.choice(CHOICE)
-    # tile2 = random.choice(CHOICE)
-    # board[2] = tile1
-    # board[3] = tile2
-    # np.random.shuffle(board)
+    tile1 = random.choice(CHOICE)
+    tile2 = random.choice(CHOICE)
+    board[2] = tile1
+    board[3] = tile2
+    np.random.shuffle(board)
 
-    board[0] = 2
-    board[4] = 2
-    board[8] = 2
-    board[12] = 2
+    # board[0] = 2
+    # board[4] = 2
+    # board[8] = 2
+    # board[12] = 2
 
     # tiles = [ 2, 4, 8, 4, 4, 8, 4,  2, 64,  32,  16,   4, 16,  64, 256, 512]
     # for i in range(16):
@@ -257,7 +258,7 @@ def draw_board(board, score):
     This function draws the board to the screen
     """
     pygame.draw.rect(screen, GAME_COLORS['BLACK'], (0,0,SCREEN_WIDTH, SCREEN_HEIGHT)) # Background
-    pygame.draw.rect(screen, GAME_COLORS['BLACK_LIGHT'], (10,30+TILE_SIZE, SCREEN_WIDTH-20, SCREEN_HEIGHT-40-TILE_SIZE)) # Tile background
+    pygame.draw.rect(screen, GAME_COLORS['DARK_GRAY'], (10,30+TILE_SIZE, SCREEN_WIDTH-20, SCREEN_HEIGHT-40-TILE_SIZE)) # Tile background
     tempBoard = board.copy().reshape(WIDTH,HEIGHT) 
 
     # Display the tiles
@@ -270,41 +271,69 @@ def draw_board(board, score):
                 screen.blit(label, lblRect)
 
     # Display the score
-    label = ariel_25.render(f'Score: {score}', 1, GAME_COLORS['BLACK_LIGHT'])
+    label = ariel_25.render(f'Score: {score}', 1, GAME_COLORS['LIGHT_GRAY'])
     screen.blit(label, (20,TILE_SIZE))
 
+    undo = ariel_25.render(f'Undo: CTRL + Z', 1, GAME_COLORS['LIGHT_GRAY'])
+    screen.blit(undo, (SCREEN_WIDTH//2,TILE_SIZE))
+
     # Display the Game title
-    title = ariel_55.render("2048 In Python!", 1, GAME_COLORS['BLACK_LIGHT'])
+    title = ariel_55.render("2048 In Python!", 1, GAME_COLORS['LIGHT_GRAY'])
     screen.blit(title, (20,20))
 
+def draw_button(centerX, centerY, width, height, text="button"):
+    # Display button
+    rect1 = Rect(0,0,0,0)
+    rect1.size=(width, height)
+    rect1.centerx = (centerX)
+    rect1.centery = (centerY)
+    pygame.draw.rect(screen, GAME_COLORS['LIGHT_GRAY'], rect1)
+    
+    rect2 = Rect(0,0,0,0)
+    rect2.size=(width-10, height-10)
+    rect2.centerx = (centerX)
+    rect2.centery = (centerY)
+    pygame.draw.rect(screen, GAME_COLORS['DARK_GRAY'], rect2)
+
+    label = ariel_55.render(text,1, GAME_COLORS['LIGHT_GRAY'])
+    lblRect = label.get_rect(center=(centerX, centerY))
+    screen.blit(label, lblRect)
+
+    return rect1
                       
 if __name__ == "__main__":
     # * Initialize Game * #
     gameOver = False
     running = True
     score = 0
+    oldScore = score
     board = create_board()
     initialize_game(board)
+    oldBoard = board.copy()
+    
     print_board(board, score)
 
     # * Initialize Graphics * #
     pygame.init()
     pygame.display.init()
     pygame.font.init()
+    pygame.display.set_caption("2048 In Python!")
+    icon = pygame.image.load('images\\2048_white.png')
+    pygame.display.set_icon(icon)
     ariel_55 = pygame.font.SysFont("ariel", 55)
     ariel_25 = pygame.font.SysFont("ariel", 25)
     screen = pygame.display.set_mode(SCREEN_SIZE)
     draw_board(board, score)
     pygame.display.update()
 
-    
+    button = Rect(0,0,0,0)
     # * Game Loop * #
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
 
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN and not gameOver:
                 if event.key == pygame.K_w or event.key == pygame.K_UP:
                     oldBoard = board.copy()
                     oldScore = score
@@ -336,15 +365,38 @@ if __name__ == "__main__":
 
                 if is_game_over(board):
                     gameOver = True
+
+                # gameOver = True
                 
                 if gameOver: # Endgame screen
+                    # Tint the background
+                    bg = pygame.Surface(SCREEN_SIZE)
+                    bg.set_alpha(200)
+                    pygame.draw.rect(bg, GAME_COLORS['BLACK'], (0,0,SCREEN_WIDTH,SCREEN_HEIGHT))
+                    screen.blit(bg, (0, 0))
+
                     labels = ["Game Over!", f"Your Score: {score}", f"Largest Tile: {board.max()}"]
                     for line in range(len(labels)):
-                        label = ariel_55.render(labels[line],1, GAME_COLORS['BLACK_RED'])
-                        lblRect = label.get_rect(center=(SCREEN_WIDTH//2, (SCREEN_HEIGHT//2)+(line*45) ))
+                        label = ariel_55.render(labels[line],1, GAME_COLORS['LIGHT_GRAY'])
+                        lblRect = label.get_rect(center=(SCREEN_WIDTH//2, (SCREEN_HEIGHT//3)+(line*45) ))
                         screen.blit(label, lblRect)
+
+                    # TODO: Ask the player to play again.
+                    button = draw_button(SCREEN_WIDTH//2, (SCREEN_HEIGHT//3)*2, TILE_SIZE*2.5, TILE_SIZE, "Play Again")
 
                     pygame.display.update()
                     print(f"Game Over\nYour Score Was: {score}\nHighest Tile Created: {board.max()}")
-                    # TODO: Ask the player to play again.
+
+            if (event.type == pygame.MOUSEBUTTONDOWN and event.button ==1) and gameOver:
+                pos = pygame.mouse.get_pos()
+                if button.collidepoint(pos):
+                    print("Button Pressed")
+                    gameOver = False
+                    board = create_board()
+                    score = 0
+                    initialize_game(board)
+                    draw_board(board, score)
+                    pygame.display.update()
+                    
+                    
     
