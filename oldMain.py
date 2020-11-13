@@ -20,6 +20,7 @@ SCREEN_HEIGHT = ((TILE_SIZE+20) * (HEIGHT + 1))-10
 
 SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
 
+
 GAME_COLORS = {
     "BLACK" : (0,0,0),
     "WHITE" : (255,255,255),
@@ -289,25 +290,7 @@ def draw_board(board, score, highScr):
     title = ariel_55.render("2048 In Python!", 1, GAME_COLORS['LIGHT_GRAY'])
     screen.blit(title, (20,20))
 
-def draw_button(centerX, centerY, width, height, text="button"):
-    # Display button
-    rect1 = Rect(0,0,0,0)
-    rect1.size=(width, height)
-    rect1.centerx = (centerX)
-    rect1.centery = (centerY)
-    pygame.draw.rect(screen, GAME_COLORS['LIGHT_GRAY'], rect1)
-    
-    rect2 = Rect(0,0,0,0)
-    rect2.size=(width-10, height-10)
-    rect2.centerx = (centerX)
-    rect2.centery = (centerY)
-    pygame.draw.rect(screen, GAME_COLORS['DARK_GRAY'], rect2)
 
-    label = ariel_55.render(text,1, GAME_COLORS['LIGHT_GRAY'])
-    lblRect = label.get_rect(center=(centerX, centerY))
-    screen.blit(label, lblRect)
-
-    return rect1
 
 def write_line(file, line):
     f = open(file, "wt")
@@ -331,6 +314,26 @@ def read_highscore(file='highscore.txt'):
 def write_highscore(highScore, score, file='highscore.txt'):
     if highScore <= score:
         write_line(file,score)
+
+def draw_button(screen, centerX, centerY, width=50, height=25, text="button", primaryColor=(64,64,64), secondaryColor=(176,176,176)):
+    # Display button
+    rect1 = Rect(0,0,0,0)
+    rect1.size=(width, height)
+    rect1.centerx = (centerX)
+    rect1.centery = (centerY)
+    pygame.draw.rect(screen, secondaryColor, rect1)
+    
+    rect2 = Rect(0,0,0,0)
+    rect2.size=(width-10, height-10)
+    rect2.centerx = (centerX)
+    rect2.centery = (centerY)
+    pygame.draw.rect(screen, primaryColor, rect2)
+
+    label = ariel_55.render(text,1, secondaryColor)
+    lblRect = label.get_rect(center=(centerX, centerY))
+    screen.blit(label, lblRect)
+
+    return rect1
                       
 if __name__ == "__main__":
     # * Initialize Game * #

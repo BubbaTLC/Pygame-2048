@@ -4,13 +4,13 @@ from pygame.locals import *
 
 class App:
     """Create a single-window app with multiple scenes."""
-
     def __init__(self):
         """Initialize pygame and the application."""
         pygame.init()
-        flags = RESIZABLE
+        flags = pygame.RESIZABLE
         App.screen = pygame.display.set_mode((500,500), flags)
         App.t = Text('Pygame App', pos=(20, 20))
+        App.scenes = []
 
         App.running = True
 
@@ -36,15 +36,11 @@ class App:
         self.flags ^= pygame.display.RESIZABLE
         pygame.display.set_mode(self.rect.size, self.flags)
 
-    def toggle_frame(self):
-        """Toggle between frame and noframe window."""
-        self.flags ^= pygame.display.NOFRAME
-        pygame.display.set_mode(self.rect.size, self.flags)
 
 class Scene:
     """Create a new scene (room, level, view)."""
     id = 0
-    bg = Color((64,64,64, 200))
+    bg = Color((64,64,64))
 
     def __init__(self, *args, **kwargs):
         # Append the new scene and make it the current scene
@@ -62,6 +58,9 @@ class Scene:
             node.draw()
         pygame.display.flip()
 
+    def __str__(self):
+        return 'Scene {}'.format(self.id)
+
 class Text:
     """Create a text object."""
     def __init__(self, text, pos, **options):
@@ -70,7 +69,7 @@ class Text:
 
         self.fontname = None
         self.fontsize = 72
-        self.fontcolor = Color((255,255,255))
+        self.fontcolor = Color('black')
         self.set_font()
         self.render()
 
@@ -91,6 +90,24 @@ class Text:
 class Demo(App):
     def __init__(self):
         super().__init__()
+
+        # HEIGHT = 4
+        # WIDTH = 4
+
+        # CHOICE = [2,4]
+
+        # END_TILE = 2048
+
+        # TILE_SIZE = 100
+        # SCREEN_WIDTH = ((TILE_SIZE+20) * (WIDTH))-10
+        # SCREEN_HEIGHT = ((TILE_SIZE+20) * (HEIGHT + 1))-10
+
+        # SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
+
+        Scene(caption="Start")
+        Text('Scene 0', pos=(0,0))
+
+        App.scene = App.scenes[0]
 
 
 if __name__ == "__main__":
