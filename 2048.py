@@ -1,5 +1,5 @@
 import pygame
-from pygame.locals import *
+from pygame.locals import Rect
 import numpy as np
 import sys
 import math
@@ -310,7 +310,6 @@ def draw_button(centerX, centerY, width, height, text="button"):
     return rect1
 
 def write_line(file, line):
-    print("Writing to file")
     f = open(file, "wt")
     f.writelines(f"{line}")
     f.close()
@@ -320,6 +319,18 @@ def read_line(file):
     line = f.readline()
     f.close()
     return line
+
+def read_highscore(file='highscore.txt'):
+    highScore = 0
+    try:
+        highScore = int(read_line(file))
+    except ValueError:
+        highScore = 0
+    return highScore
+
+def write_highscore(highScore, score, file='highscore.txt'):
+    if highScore <= score:
+        write_line(file,score)
                       
 if __name__ == "__main__":
     # * Initialize Game * #
@@ -332,11 +343,7 @@ if __name__ == "__main__":
     initialize_game(board)
     oldBoard = board.copy()
 
-    try:
-        highScore = int(read_line('highscore.txt'))
-    except ValueError:
-        highScore = 0
-    print(highScore)
+    highScore = read_highscore()
 
     # * Initialize Graphics * #
     pygame.init()
@@ -356,8 +363,7 @@ if __name__ == "__main__":
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                if highScore <= score:
-                    write_line('highscore.txt',score)
+                write_highscore(highScore, score)
                 sys.exit()
 
             if event.type == pygame.KEYDOWN and not gameOver:
@@ -385,8 +391,9 @@ if __name__ == "__main__":
                     board = oldBoard
                     score = oldScore
 
-                # New Game
                 if event.key == pygame.K_r and pygame.key.get_mods() & pygame.KMOD_CTRL: # New Game
+                    write_highscore(highScore, score)
+                    highScore = read_highscore()
                     gameOver = False
                     board = create_board()
                     score = 0
@@ -401,7 +408,6 @@ if __name__ == "__main__":
 
                 if is_game_over(board):
                     gameOver = True
-
                 
                 if gameOver: # Endgame screen
                     # Tint the background
@@ -422,19 +428,14 @@ if __name__ == "__main__":
 
                     pygame.display.update()
 
-                    if highScore <= score:
-                        write_line('highscore.txt',score)
+                    write_highscore(highScore, score)
 
             # Click Play again
             if (event.type == pygame.MOUSEBUTTONDOWN and event.button ==1) and gameOver:
                 pos = pygame.mouse.get_pos()
                 if button.collidepoint(pos):
-                    if highScore <= score:
-                        write_line('highscore.txt',score)
-                    try:
-                        highScore = int(read_line('highscore.txt'))
-                    except ValueError:
-                        highScore = 0
+                    write_highscore(highScore, score)
+                    highScore = read_highscore()
                     gameOver = False
                     board = create_board()
                     score = 0
