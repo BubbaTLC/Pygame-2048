@@ -1,5 +1,5 @@
 import pygame
-from pygame.locals import Rect
+from pygame.locals import *
 import numpy as np
 import sys
 import math
