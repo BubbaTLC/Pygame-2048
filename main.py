@@ -1,114 +1,205 @@
 import pygame
 from pygame.locals import *
+import numpy as np
 # pylint: disable=no-member
 
-class App:
-    """Create a single-window app with multiple scenes."""
-    def __init__(self):
-        """Initialize pygame and the application."""
-        pygame.init()
-        flags = pygame.RESIZABLE
-        App.screen = pygame.display.set_mode((500,500), flags)
-        App.t = Text('Pygame App', pos=(20, 20))
-        App.scenes = []
+class Board:
+    """Board Object for storing the position of tiles."""
+    def __init__(self, width=4, height=4, score=0, choice=[2,4], endTile=2048):
+        self.tiles = np.zeros(width*height, dtype=int)
+        for i in range(len(choice)-1):
+            self.tiles[i] = choice[i]
+        np.random.shuffle(self.tiles)
 
-        App.running = True
+        self.width = width
+        self.height = height
+        self.choice = choice
+        self.score = score
+        self.endTile = endTile
 
-    def run(self):
-        """Run the main event loop."""
-        while App.running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    App.running = False
+    def place_tile(self):
+        """
+        This function will randomly place a tile on an open space.
+        """
+        tile = np.random.choice(self.choice)
 
-            App.screen.fill(Color((255,255,255)))
-            pygame.display.update()
+        possiblePos = np.where(self.tiles == 0)
+        if len(possiblePos[0]) == 0:
+            return
+        
+        pos = np.random.choice(possiblePos[0])
+        self.tiles[pos] = tile
 
-        pygame.quit()
+    def can_move(self):
+        """
+        """
+        # if there are empty tiles we can move.
+        if len(np.where(self.tiles == 0)[0]) > 0:
+            return True
 
-    def toggle_fullscreen(self):
-        """Toggle between full screen and windowed screen."""
-        self.flags ^= pygame.display.FULLSCREEN
-        pygame.display.set_mode((0, 0), self.flags)
+        # Check if the tile bellow is the same
+        for r in range(len(self.tiles) - self.width):
+            if self.tiles[r] == self.tiles[r+self.width]:
+                return True
+        
+        # Check if the tile to the side is the same
+        for r in range(0, len(self.tiles)-1, self.width):
+            for c in range(0, self.tiles-1, 1):
+                if self.tiles[r+(c)] == self.tiles[r+(c+1)]:
+                    return True
+        
+        return False
 
-    def toggle_resizable(self):
-        """Toggle between resizable and fixed-size window."""
-        self.flags ^= pygame.display.RESIZABLE
-        pygame.display.set_mode(self.rect.size, self.flags)
+    def print_board(self):
+        """
+        This functions prints the self.tiles and the score to the console.
+        """
+        print(f"Score: {self.score}")
+        print(self.tiles.copy().reshape(self.width,self.height))
+
+    def is_game_over(self):
+        """
+            This function returns if the game is over.
+        """
+        if len(np.where(self.tiles == self.endTile)[0]):
+            return True
+
+        if self.can_move():
+            return False
+        
+        return True
+
+    def move_left(self):
+        """
+        This function will shift the tiles to the left.
+        """
+        tempB = self.tiles.copy()
+
+        for i in range(self.width-1):
+            for r in range(0, len(self.tiles)-1, 4):
+                for c in range(0, self.width-1, 1):
+                    if self.tiles[r+(c)] == 0:
+                        self.tiles[r+(c)] = self.tiles[r+(c+1)]
+                        self.tiles[r+(c+1)] = 0
+
+        for r in range(0, len(self.tiles)-1, 4):
+            for c in range(0, self.width-1, 1):
+                if self.tiles[r+(c)] == self.tiles[r+(c+1)]:
+                    self.tiles[r+(c)] = self.tiles[r+(c)] + self.tiles[r+(c+1)]
+                    self.tiles[r+(c+1)] = 0
+                    score += self.tiles[r+(c)]
+
+        for i in range(self.width-1):
+            for r in range(0, len(self.tiles)-1, 4):
+                for c in range(0, self.width-1, 1):
+                    if self.tiles[r+(c)] == 0:
+                        self.tiles[r+(c)] = self.tiles[r+(c+1)]
+                        self.tiles[r+(c+1)] = 0
+
+        compare = tempB == self.tiles
+
+        if not self.is_game_over() and not compare.all():
+            self.place_tile()
+
+        return score
+    
+    def move_right(self):
+        """
+        This function will shifts the tiles to the right.
+        """
+
+        tempB = self.tiles.copy()
+
+        for i in range(self.width-1):
+            for r in range(len(self.tiles)-1, 0, -4):
+                for c in range(0, self.width-1, 1):
+                    if self.tiles[r-(c)] == 0:
+                        self.tiles[r-(c)] = self.tiles[r-(c+1)]
+                        self.tiles[r-(c+1)] = 0
+
+        for r in range(len(self.tiles)-1, 0, -4):
+            for c in range(0, self.width-1, 1):
+                if self.tiles[r-(c)] == self.tiles[r-(c+1)]:
+                    self.tiles[r-(c)] = self.tiles[r-(c)] + self.tiles[r-(c+1)]
+                    self.tiles[r-(c+1)] = 0
+                    score += self.tiles[r-(c)]
+
+        for i in range(self.width-1):
+            for r in range(len(self.tiles)-1, 0, -4):
+                for c in range(0, self.width-1, 1):
+                    if self.tiles[r-(c)] == 0:
+                        self.tiles[r-(c)] = self.tiles[r-(c+1)]
+                        self.tiles[r-(c+1)] = 0
+
+        compare = tempB == self.tiles
+
+        if not self.is_game_over() and not compare.all():
+            self.place_tile()
 
 
-class Scene:
-    """Create a new scene (room, level, view)."""
-    id = 0
-    bg = Color((64,64,64))
+        return score
 
-    def __init__(self, *args, **kwargs):
-        # Append the new scene and make it the current scene
-        App.scenes.append(self)
-        App.scene = self
-        self.id = Scene.id
-        Scene.id += 1
-        self.nodes = []
-        self.bg = Scene.bg
+    def move_up(self):
+        """
+        This function will shifts the tiles up.
+        """
 
-    def draw(self):
-        """Draw all objects in the scene."""
-        App.screen.fill(self.bg)
-        for node in self.nodes:
-            node.draw()
-        pygame.display.flip()
+        tempB = self.tiles.copy()
 
-    def __str__(self):
-        return 'Scene {}'.format(self.id)
+        for i in range(self.width-1):
+            for c in range(len(self.tiles)-self.height):
+                if self.tiles[c] == 0:
+                    self.tiles[c] = self.tiles[c+self.height]
+                    self.tiles[c+self.height] = 0
 
-class Text:
-    """Create a text object."""
-    def __init__(self, text, pos, **options):
-        self.text = text
-        self.pos = pos
+        for c in range(len(self.tiles)-self.height):
+            if self.tiles[c] == self.tiles[c+self.height]:
+                self.tiles[c] = self.tiles[c] + self.tiles[c+self.height]
+                self.tiles[c+self.height] = 0
+                score += self.tiles[c]
 
-        self.fontname = None
-        self.fontsize = 72
-        self.fontcolor = Color('black')
-        self.set_font()
-        self.render()
+        for i in range(self.width-1):
+            for c in range(len(self.tiles)-self.height):
+                if self.tiles[c] == 0:
+                    self.tiles[c] = self.tiles[c+self.height]
+                    self.tiles[c+self.height] = 0
 
-    def render(self):
-        """Render the text into an image."""
-        self.img = self.font.render(self.text, True, self.fontcolor)
-        self.rect = self.img.get_rect()
-        self.rect.topleft = self.pos
+        compare = tempB == self.tiles
 
-    def set_font(self):
-        """Set the font from its name and size."""
-        self.font = pygame.font.Font(self.fontname, self.fontsize)
-
-    def draw(self):
-        """Draw the text image to the screen."""
-        App.screen.blit(self.img, self.rect)
-
-class Demo(App):
-    def __init__(self):
-        super().__init__()
-
-        # HEIGHT = 4
-        # WIDTH = 4
-
-        # CHOICE = [2,4]
-
-        # END_TILE = 2048
-
-        # TILE_SIZE = 100
-        # SCREEN_WIDTH = ((TILE_SIZE+20) * (WIDTH))-10
-        # SCREEN_HEIGHT = ((TILE_SIZE+20) * (HEIGHT + 1))-10
-
-        # SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
-
-        Scene(caption="Start")
-        Text('Scene 0', pos=(0,0))
-
-        App.scene = App.scenes[0]
+        if not self.is_game_over(self.tiles) and not compare.all():
+            self.place_tile()
 
 
-if __name__ == "__main__":
-    Demo().run()
+        return score
+
+    def move_down(self):
+        """
+        This function will shifts the tiles down.
+        """
+        tempB = self.tiles.copy()
+        for i in range(self.height-1):
+            for c in range(len(self.tiles)-1, self.height-1, -1): # Move tiles
+                if self.tiles[c] == 0:
+                    self.tiles[c] = self.tiles[c-self.height]
+                    self.tiles[c-self.height] = 0
+
+        for c in range(len(self.tiles)-1, self.height-1, -1): # Combine tiles
+            if self.tiles[c] == self.tiles[c-self.height]:
+                self.tiles[c] = self.tiles[c] + self.tiles[c-self.height]
+                self.tiles[c-self.height] = 0
+                score += self.tiles[c]
+
+        for i in range(self.height-1):
+            for c in range(len(self.tiles)-1, self.height-1, -1): # Move tiles
+                if self.tiles[c] == 0:
+                    self.tiles[c] = self.tiles[c-self.height]
+                    self.tiles[c-self.height] = 0
+
+        compare = tempB == self.tiles
+
+        if not self.is_game_over() and not compare.all():
+            self.place_tile()
+
+        return score
+
+
