@@ -15,6 +15,7 @@ class Board:
         self.height = height
         self.choice = choice
         self.score = score
+        self.highScore = self.read_highscore()
         self.endTile = endTile
 
     def place_tile(self):
@@ -166,9 +167,8 @@ class Board:
 
         compare = tempB == self.tiles
 
-        if not self.is_game_over(self.tiles) and not compare.all():
+        if not self.is_game_over() and not compare.all():
             self.place_tile()
-
 
         return score
 
@@ -202,4 +202,122 @@ class Board:
 
         return score
 
+    def read_highscore(self, file='highscore.txt'):
+        try:
+            f = open(file, "rt")
+            line = f.readline()
+            f.close()
+            self.highScore = int(line)
+        except ValueError:
+            self.highScore = 0
 
+    def write_highscore(self, file='highscore.txt'):
+        try:
+            if self.highScore <= self.score:
+                f = open(file, "wt")
+                f.writelines(f"{self.score}")
+                f.close()
+        except:
+            pass
+
+
+class App:
+    """Create a single-window app with multiple scenes."""
+
+    def __init__(self):
+        """Initialize pygame and the application."""
+        pygame.init()
+        # flags = pygame.NOFRAME
+        self.TILE_SIZE = 100
+        self.WIDTH = ((self.TILE_SIZE+20) * (4))-10
+        self.HEIGHT = ((self.TILE_SIZE+20) * (5))-10
+        self.SCREEN_SIZE = (self.WIDTH, self.HEIGHT)
+        App.screen = pygame.display.set_mode(self.SCREEN_SIZE)
+        App.running = True
+
+        self.shortcuts = {
+            (pygame.K_z, pygame.KMOD_CTRL): 'print("ctl+X")',
+            (pygame.K_r, pygame.KMOD_CTRL): 'print("alt+X")',
+            (pygame.K_a, pygame.KMOD_CTRL + pygame.KMOD_SHIFT): 'print("ctrl+shift+A")',
+        }
+
+        self.colors = {
+            "BLACK" : (0,0,0),
+            "WHITE" : (255,255,255),
+            "DARK_GRAY": (64,64,64),
+            "LIGHT_GRAY": (176,176,176),
+            "0": (88,88,88),
+            "2": (204, 102, 0),
+            "4": (204, 153, 0),
+            "8": (204, 204, 0),
+            "16": (102, 204, 0),
+            "32": (0, 204, 0),
+            "64": (0, 204, 102),
+            "128": (0, 204, 204),
+            "256": (0, 102, 204),
+            "512": (0, 0, 204),
+            "1024": (102, 0, 204),
+            "2048": (204, 0, 204),
+            "MAX" : (153, 0, 153)
+        }
+
+    def run(self):
+        """Run the main event loop."""
+        while App.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    App.running = False
+
+                if event.type == pygame.KEYDOWN:
+                    self.do_shortcut(event)
+        pygame.quit()
+
+    def do_shortcut(self, event):
+        """Find the the key/mod combination in the dictionary and execute the cmd."""
+        k = event.key
+        m = event.mod
+        if k in self.shortcuts and m == 0 :
+            exec(self.shortcuts[k])
+        elif (k, m) in self.shortcuts:
+            exec(self.shortcuts[k, m])
+
+    # def draw_board(self, board):
+    #     """
+    #     This function draws the board to the screen
+    #     """
+    #     pygame.draw.rect(screen, GAME_COLORS['BLACK'], (0,0,SCREEN_WIDTH, SCREEN_HEIGHT)) # Background
+    #     pygame.draw.rect(screen, GAME_COLORS['DARK_GRAY'], (10,30+TILE_SIZE, SCREEN_WIDTH-20, SCREEN_HEIGHT-40-TILE_SIZE)) # Tile background
+    #     tempBoard = board.copy().reshape(WIDTH,HEIGHT) 
+
+    #     # Display the tiles
+    #     for c in range(WIDTH):
+    #         for r in range(HEIGHT):
+    #             pygame.draw.rect(screen, GAME_COLORS[f'{tempBoard[r][c]}'], ((20)+(c*TILE_SIZE)+(c*10),(40+TILE_SIZE)+(r*TILE_SIZE)+(r*10), TILE_SIZE, TILE_SIZE))
+    #             if tempBoard[r][c] > 0:
+    #                 label = ariel_55.render(f'{tempBoard[r][c]}', 1, GAME_COLORS['BLACK'])
+    #                 lblRect = label.get_rect(center=(((20)+(c*TILE_SIZE)+(c*10))+(TILE_SIZE//2), ((40+TILE_SIZE)+(r*TILE_SIZE)+(r*10))+(TILE_SIZE//2)))
+    #                 screen.blit(label, lblRect)
+
+    #     # Display the score
+    #     if score > highScr:
+    #         highScr = score
+
+    #     lblScore = ariel_25.render(f'Score: {score}', 1, GAME_COLORS['LIGHT_GRAY'])
+    #     lblHighscore = ariel_25.render(f'Highscore: {highScr}', 1, GAME_COLORS['LIGHT_GRAY'])
+    #     screen.blit(lblScore, (20,TILE_SIZE))
+    #     screen.blit(lblHighscore, (20,TILE_SIZE-25))
+
+    #     # Display Controls
+    #     undo = ariel_25.render(f'Undo: CTRL + Z', 1, GAME_COLORS['LIGHT_GRAY'])
+    #     screen.blit(undo, ((SCREEN_WIDTH//2)+35,TILE_SIZE))
+    #     undo = ariel_25.render(f'New Game: CTRL + R', 1, GAME_COLORS['LIGHT_GRAY'])
+    #     screen.blit(undo, ((SCREEN_WIDTH//2)+35,TILE_SIZE-25))
+
+    #     # Display the Game title
+    #     title = ariel_55.render("2048 In Python!", 1, GAME_COLORS['LIGHT_GRAY'])
+    #     screen.blit(title, (20,20))
+
+
+
+if __name__ == '__main__':
+    App().run()
