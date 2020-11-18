@@ -1,5 +1,5 @@
 import pygame
-from pygame.locals import *
+# from pygame.locals import *
 import numpy as np
 from ui import *
 # pylint: disable=no-member

@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+from main import Board
 # pylint: disable=no-member
 
 COLORS = {
@@ -122,7 +123,7 @@ class MenuScene(Scene):
         for event in events:
             if (event.type == pygame.MOUSEBUTTONDOWN and event.button ==1 ):
                 if self.btnNewGame.button_clicked(event):
-                    print("New Game")
+                    self.SwitchToScene(GameScene(Board()))
     
     def Render(self, screen):
         # Show title
@@ -173,8 +174,7 @@ class GameScene(Scene):
         pass
     
     def Render(self, screen):
-        # For the sake of brevity, the title scene is a blank red screen
-        screen.fill((0, 255, 0))
+        screen.fill(COLORS['BLACK'])
 
 class EndScene(Scene):
     def __init__(self, board):
