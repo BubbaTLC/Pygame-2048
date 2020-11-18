@@ -15,8 +15,11 @@ class Board:
         self.height = height
         self.choice = choice
         self.score = score
-        self.highScore = self.read_highscore()
+        self.highScore = 0
+        self.read_highscore()
         self.endTile = endTile
+        self.lastScore = score
+        self.lastTiles = self.tiles.copy()
 
     def place_tile(self):
         """
@@ -45,7 +48,7 @@ class Board:
         
         # Check if the tile to the side is the same
         for r in range(0, len(self.tiles)-1, self.width):
-            for c in range(0, self.tiles-1, 1):
+            for c in range(0, self.width-1, 1):
                 if self.tiles[r+(c)] == self.tiles[r+(c+1)]:
                     return True
         
@@ -74,7 +77,8 @@ class Board:
         """
         This function will shift the tiles to the left.
         """
-        tempB = self.tiles.copy()
+        self.lastTiles = self.tiles.copy()
+        self.lastScore = self.score
 
         for i in range(self.width-1):
             for r in range(0, len(self.tiles)-1, 4):
@@ -88,7 +92,7 @@ class Board:
                 if self.tiles[r+(c)] == self.tiles[r+(c+1)]:
                     self.tiles[r+(c)] = self.tiles[r+(c)] + self.tiles[r+(c+1)]
                     self.tiles[r+(c+1)] = 0
-                    score += self.tiles[r+(c)]
+                    self.score += self.tiles[r+(c)]
 
         for i in range(self.width-1):
             for r in range(0, len(self.tiles)-1, 4):
@@ -97,19 +101,18 @@ class Board:
                         self.tiles[r+(c)] = self.tiles[r+(c+1)]
                         self.tiles[r+(c+1)] = 0
 
-        compare = tempB == self.tiles
+        compare = self.lastTiles == self.tiles
 
         if not self.is_game_over() and not compare.all():
-            self.place_tile()
-
-        return score
+            self.place_tile()      
     
     def move_right(self):
         """
         This function will shifts the tiles to the right.
         """
 
-        tempB = self.tiles.copy()
+        self.lastTiles = self.tiles.copy()
+        self.lastScore = self.score
 
         for i in range(self.width-1):
             for r in range(len(self.tiles)-1, 0, -4):
@@ -123,7 +126,7 @@ class Board:
                 if self.tiles[r-(c)] == self.tiles[r-(c+1)]:
                     self.tiles[r-(c)] = self.tiles[r-(c)] + self.tiles[r-(c+1)]
                     self.tiles[r-(c+1)] = 0
-                    score += self.tiles[r-(c)]
+                    self.score += self.tiles[r-(c)]
 
         for i in range(self.width-1):
             for r in range(len(self.tiles)-1, 0, -4):
@@ -132,20 +135,18 @@ class Board:
                         self.tiles[r-(c)] = self.tiles[r-(c+1)]
                         self.tiles[r-(c+1)] = 0
 
-        compare = tempB == self.tiles
+        compare = self.lastTiles == self.tiles
 
         if not self.is_game_over() and not compare.all():
             self.place_tile()
-
-
-        return score
 
     def move_up(self):
         """
         This function will shifts the tiles up.
         """
 
-        tempB = self.tiles.copy()
+        self.lastTiles = self.tiles.copy()
+        self.lastScore = self.score
 
         for i in range(self.width-1):
             for c in range(len(self.tiles)-self.height):
@@ -157,7 +158,7 @@ class Board:
             if self.tiles[c] == self.tiles[c+self.height]:
                 self.tiles[c] = self.tiles[c] + self.tiles[c+self.height]
                 self.tiles[c+self.height] = 0
-                score += self.tiles[c]
+                self.score += self.tiles[c]
 
         for i in range(self.width-1):
             for c in range(len(self.tiles)-self.height):
@@ -165,18 +166,18 @@ class Board:
                     self.tiles[c] = self.tiles[c+self.height]
                     self.tiles[c+self.height] = 0
 
-        compare = tempB == self.tiles
+        compare = self.lastTiles == self.tiles
 
         if not self.is_game_over() and not compare.all():
             self.place_tile()
-
-        return score
 
     def move_down(self):
         """
         This function will shifts the tiles down.
         """
-        tempB = self.tiles.copy()
+        self.lastTiles = self.tiles.copy()
+        self.lastScore = self.score
+
         for i in range(self.height-1):
             for c in range(len(self.tiles)-1, self.height-1, -1): # Move tiles
                 if self.tiles[c] == 0:
@@ -187,7 +188,7 @@ class Board:
             if self.tiles[c] == self.tiles[c-self.height]:
                 self.tiles[c] = self.tiles[c] + self.tiles[c-self.height]
                 self.tiles[c-self.height] = 0
-                score += self.tiles[c]
+                self.score += self.tiles[c]
 
         for i in range(self.height-1):
             for c in range(len(self.tiles)-1, self.height-1, -1): # Move tiles
@@ -195,12 +196,10 @@ class Board:
                     self.tiles[c] = self.tiles[c-self.height]
                     self.tiles[c-self.height] = 0
 
-        compare = tempB == self.tiles
+        compare = self.lastTiles == self.tiles
 
         if not self.is_game_over() and not compare.all():
             self.place_tile()
-
-        return score
 
     def read_highscore(self, file='highscore.txt'):
         try:
@@ -232,13 +231,24 @@ class App:
         self.WIDTH = ((self.TILE_SIZE+20) * (4))-10
         self.HEIGHT = ((self.TILE_SIZE+20) * (5))-10
         self.SCREEN_SIZE = (self.WIDTH, self.HEIGHT)
-        App.screen = pygame.display.set_mode(self.SCREEN_SIZE)
-        App.running = True
+        self.screen = pygame.display.set_mode(self.SCREEN_SIZE)
+        self.running = True
+
+
+        self.board = Board()
 
         self.shortcuts = {
-            (pygame.K_z, pygame.KMOD_CTRL): 'print("ctl+X")',
-            (pygame.K_r, pygame.KMOD_CTRL): 'print("alt+X")',
-            (pygame.K_a, pygame.KMOD_CTRL + pygame.KMOD_SHIFT): 'print("ctrl+shift+A")',
+            (pygame.K_w):       'self.board.move_up()',
+            (pygame.K_s):       'self.board.move_down()',
+            (pygame.K_a):       'self.board.move_left()',
+            (pygame.K_d):       'self.board.move_right()',
+            (pygame.K_UP):      'self.board.move_up()',
+            (pygame.K_DOWN):    'self.board.move_down()',
+            (pygame.K_LEFT):    'self.board.move_left()',
+            (pygame.K_RIGHT):   'self.board.move_right()',
+            (pygame.K_z, 4160): 'self.board.tiles = self.board.lastTiles.copy()\nself.board.score = self.board.lastScore',
+            (pygame.K_r, 4160): 'self.board = Board()',
+            (pygame.K_a, 4161): 'print("ctrl+shift+a")',
         }
 
         self.colors = {
@@ -270,16 +280,22 @@ class App:
 
                 if event.type == pygame.KEYDOWN:
                     self.do_shortcut(event)
+                    self.board.print_board()
+
+            if self.board.is_game_over():
+                App.running = False
+                print('gameover')
+
         pygame.quit()
 
     def do_shortcut(self, event):
         """Find the the key/mod combination in the dictionary and execute the cmd."""
         k = event.key
         m = event.mod
-        if k in self.shortcuts and m == 0 :
+        if (k, m) in self.shortcuts:
+            exec(self.shortcuts[(k , m)])
+        elif (k) in self.shortcuts:
             exec(self.shortcuts[k])
-        elif (k, m) in self.shortcuts:
-            exec(self.shortcuts[k, m])
 
     # def draw_board(self, board):
     #     """
@@ -316,6 +332,13 @@ class App:
     #     # Display the Game title
     #     title = ariel_55.render("2048 In Python!", 1, GAME_COLORS['LIGHT_GRAY'])
     #     screen.blit(title, (20,20))
+
+
+class Scene:
+    def __init__(self, *args, **kwargs):
+        # Append the new scene and make it the current scene
+        App.scenes.append(self)
+        App.scene = self
 
 
 
