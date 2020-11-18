@@ -223,6 +223,25 @@ class Board:
 class Scene:
     def __init__(self):
         self.next = self
+        self.colors = {
+            "BLACK" : (0,0,0),
+            "WHITE" : (255,255,255),
+            "DARK_GRAY": (64,64,64),
+            "LIGHT_GRAY": (176,176,176),
+            "0": (88,88,88),
+            "2": (204, 102, 0),
+            "4": (204, 153, 0),
+            "8": (204, 204, 0),
+            "16": (102, 204, 0),
+            "32": (0, 204, 0),
+            "64": (0, 204, 102),
+            "128": (0, 204, 204),
+            "256": (0, 102, 204),
+            "512": (0, 0, 204),
+            "1024": (102, 0, 204),
+            "2048": (204, 0, 204),
+            "MAX" : (153, 0, 153)
+        }
 
     def ProcessInput(self, events, pressed_keys):
         pass
@@ -233,15 +252,17 @@ class Scene:
     def Render(self, screen):
         pass
 
+    def SwitchToScene(self, next_scene):
+        self.next = next_scene
+    
+    def Terminate(self):
+        self.SwitchToScene(None)
+
 class MainMenu(Scene):
     def __init__(self):
         Scene.__init__(self)
 
     def ProcessInput(self, events, pressed_keys):
-        for event in events:
-            pass
-    
-    def Update(self):
         pass
     
     def Render(self, screen):
@@ -251,10 +272,35 @@ class MainMenu(Scene):
 class Game(Scene):
     def __init__(self, board):
         Scene.__init__(self)
+        self.board = board
+        self.shortcuts = {
+            (pygame.K_w):       'self.board.move_up()',
+            (pygame.K_s):       'self.board.move_down()',
+            (pygame.K_a):       'self.board.move_left()',
+            (pygame.K_d):       'self.board.move_right()',
+            (pygame.K_UP):      'self.board.move_up()',
+            (pygame.K_DOWN):    'self.board.move_down()',
+            (pygame.K_LEFT):    'self.board.move_left()',
+            (pygame.K_RIGHT):   'self.board.move_right()',
+            (pygame.K_z, 4160): 'self.board.tiles = self.board.lastTiles.copy()\nself.board.score = self.board.lastScore',
+            (pygame.K_r, 4160): 'self.board = Board()',
+            (pygame.K_a, 4161): 'print("ctrl+shift+a")',
+        }
 
     def ProcessInput(self, events, pressed_keys):
         for event in events:
-            pass
+            if event.type == pygame.KEYDOWN:
+                self.do_shortcut(event)
+                self.board.print_board()
+
+    def do_shortcut(self, event):
+        """Find the the key/mod combination in the dictionary and execute the cmd."""
+        k = event.key
+        m = event.mod
+        if (k, m) in self.shortcuts:
+            exec(self.shortcuts[(k , m)])
+        elif (k) in self.shortcuts:
+            exec(self.shortcuts[k])
     
     def Update(self):
         pass
@@ -278,85 +324,37 @@ class App:
         self.running = True
         self.board = Board()
 
-        self.shortcuts = {
-            (pygame.K_w):       'self.board.move_up()',
-            (pygame.K_s):       'self.board.move_down()',
-            (pygame.K_a):       'self.board.move_left()',
-            (pygame.K_d):       'self.board.move_right()',
-            (pygame.K_UP):      'self.board.move_up()',
-            (pygame.K_DOWN):    'self.board.move_down()',
-            (pygame.K_LEFT):    'self.board.move_left()',
-            (pygame.K_RIGHT):   'self.board.move_right()',
-            (pygame.K_z, 4160): 'self.board.tiles = self.board.lastTiles.copy()\nself.board.score = self.board.lastScore',
-            (pygame.K_r, 4160): 'self.board = Board()',
-            (pygame.K_a, 4161): 'print("ctrl+shift+a")',
-        }
-
-        self.colors = {
-            "BLACK" : (0,0,0),
-            "WHITE" : (255,255,255),
-            "DARK_GRAY": (64,64,64),
-            "LIGHT_GRAY": (176,176,176),
-            "0": (88,88,88),
-            "2": (204, 102, 0),
-            "4": (204, 153, 0),
-            "8": (204, 204, 0),
-            "16": (102, 204, 0),
-            "32": (0, 204, 0),
-            "64": (0, 204, 102),
-            "128": (0, 204, 204),
-            "256": (0, 102, 204),
-            "512": (0, 0, 204),
-            "1024": (102, 0, 204),
-            "2048": (204, 0, 204),
-            "MAX" : (153, 0, 153)
-        }
-
     def run(self):
         """Run the main event loop."""
         activeScene = MainMenu()
         gameScene = Game(self.board)
 
-        activeScene.Update()
-        activeScene.Render(self.screen)
-        pygame.display.flip()
-
-        while self.running:
+        while activeScene != None:
+            pressedKeys = pygame.key.get_pressed()
+            
+            # Event filtering
+            filteredEvents = []
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-
+                
                 if event.type == pygame.KEYDOWN:
-                    self.do_shortcut(event)
-                    self.board.print_board()
-
-                    if event.key == pygame.K_m:
-                        # activeScene.Terminate()
+                    if event.key == pygame.K_m: # Switch Scene
                         activeScene = gameScene
-                        activeScene.Update()
-                        activeScene.Render(self.screen)
-                        pygame.display.flip()
 
-            if self.board.is_game_over():
-                self.running = False
-                print('gameover')
-
+                if not self.running:
+                    activeScene.Terminate()
+                else:
+                    filteredEvents.append(event)
             
-
-            
-        
-
+            activeScene.ProcessInput(filteredEvents, pressedKeys)
+            activeScene.Render(self.screen)
+            activeScene = activeScene.next
+            pygame.display.flip()
 
         pygame.quit()
 
-    def do_shortcut(self, event):
-        """Find the the key/mod combination in the dictionary and execute the cmd."""
-        k = event.key
-        m = event.mod
-        if (k, m) in self.shortcuts:
-            exec(self.shortcuts[(k , m)])
-        elif (k) in self.shortcuts:
-            exec(self.shortcuts[k])
+    
 
 
 
