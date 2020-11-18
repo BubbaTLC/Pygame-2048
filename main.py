@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 import numpy as np
+from ui import *
 # pylint: disable=no-member
 
 class Board:
@@ -219,97 +220,6 @@ class Board:
         except:
             pass
 
-
-class Scene:
-    def __init__(self):
-        self.next = self
-        self.colors = {
-            "BLACK" : (0,0,0),
-            "WHITE" : (255,255,255),
-            "DARK_GRAY": (64,64,64),
-            "LIGHT_GRAY": (176,176,176),
-            "0": (88,88,88),
-            "2": (204, 102, 0),
-            "4": (204, 153, 0),
-            "8": (204, 204, 0),
-            "16": (102, 204, 0),
-            "32": (0, 204, 0),
-            "64": (0, 204, 102),
-            "128": (0, 204, 204),
-            "256": (0, 102, 204),
-            "512": (0, 0, 204),
-            "1024": (102, 0, 204),
-            "2048": (204, 0, 204),
-            "MAX" : (153, 0, 153)
-        }
-
-    def ProcessInput(self, events, pressed_keys):
-        pass
-
-    def Update(self):
-        pass
-
-    def Render(self, screen):
-        pass
-
-    def SwitchToScene(self, next_scene):
-        self.next = next_scene
-    
-    def Terminate(self):
-        self.SwitchToScene(None)
-
-class MainMenu(Scene):
-    def __init__(self):
-        Scene.__init__(self)
-
-    def ProcessInput(self, events, pressed_keys):
-        pass
-    
-    def Render(self, screen):
-        # For the sake of brevity, the title scene is a blank red screen
-        screen.fill((255, 0, 0))
-
-class Game(Scene):
-    def __init__(self, board):
-        Scene.__init__(self)
-        self.board = board
-        self.shortcuts = {
-            (pygame.K_w):       'self.board.move_up()',
-            (pygame.K_s):       'self.board.move_down()',
-            (pygame.K_a):       'self.board.move_left()',
-            (pygame.K_d):       'self.board.move_right()',
-            (pygame.K_UP):      'self.board.move_up()',
-            (pygame.K_DOWN):    'self.board.move_down()',
-            (pygame.K_LEFT):    'self.board.move_left()',
-            (pygame.K_RIGHT):   'self.board.move_right()',
-            (pygame.K_z, 4160): 'self.board.tiles = self.board.lastTiles.copy()\nself.board.score = self.board.lastScore',
-            (pygame.K_r, 4160): 'self.board = Board()',
-            (pygame.K_a, 4161): 'print("ctrl+shift+a")',
-        }
-
-    def ProcessInput(self, events, pressed_keys):
-        for event in events:
-            if event.type == pygame.KEYDOWN:
-                self.do_shortcut(event)
-                self.board.print_board()
-
-    def do_shortcut(self, event):
-        """Find the the key/mod combination in the dictionary and execute the cmd."""
-        k = event.key
-        m = event.mod
-        if (k, m) in self.shortcuts:
-            exec(self.shortcuts[(k , m)])
-        elif (k) in self.shortcuts:
-            exec(self.shortcuts[k])
-    
-    def Update(self):
-        pass
-    
-    def Render(self, screen):
-        # For the sake of brevity, the title scene is a blank red screen
-        screen.fill((0, 255, 0))
-
-
 class App:
     """Create a single-window app with multiple scenes."""
 
@@ -326,8 +236,10 @@ class App:
 
     def run(self):
         """Run the main event loop."""
-        activeScene = MainMenu()
-        gameScene = Game(self.board)
+        mainMenu = MenuScene()
+        gameScene = GameScene(self.board)
+        endScene = EndScene(self.board)
+        activeScene = mainMenu
 
         while activeScene != None:
             pressedKeys = pygame.key.get_pressed()
@@ -339,8 +251,14 @@ class App:
                     self.running = False
                 
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_m: # Switch Scene
+                    if event.key == pygame.K_COMMA: # Switch Scene
+                        activeScene = mainMenu
+
+                    if event.key == pygame.K_PERIOD: # Switch Scene
                         activeScene = gameScene
+
+                    if event.key == pygame.K_SLASH: # Switch Scene
+                        activeScene = endScene
 
                 if not self.running:
                     activeScene.Terminate()
@@ -353,10 +271,6 @@ class App:
             pygame.display.flip()
 
         pygame.quit()
-
-    
-
-
 
 
 
