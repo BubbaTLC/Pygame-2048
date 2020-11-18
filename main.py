@@ -220,21 +220,62 @@ class Board:
             pass
 
 
+class Scene:
+    def __init__(self):
+        self.next = self
+
+    def ProcessInput(self, events, pressed_keys):
+        pass
+
+    def Update(self):
+        pass
+
+    def Render(self, screen):
+        pass
+
+class MainMenu(Scene):
+    def __init__(self):
+        Scene.__init__(self)
+
+    def ProcessInput(self, events, pressed_keys):
+        for event in events:
+            pass
+    
+    def Update(self):
+        pass
+    
+    def Render(self, screen):
+        # For the sake of brevity, the title scene is a blank red screen
+        screen.fill((255, 0, 0))
+
+class Game(Scene):
+    def __init__(self, board):
+        Scene.__init__(self)
+
+    def ProcessInput(self, events, pressed_keys):
+        for event in events:
+            pass
+    
+    def Update(self):
+        pass
+    
+    def Render(self, screen):
+        # For the sake of brevity, the title scene is a blank red screen
+        screen.fill((0, 255, 0))
+
+
 class App:
     """Create a single-window app with multiple scenes."""
 
     def __init__(self):
         """Initialize pygame and the application."""
         pygame.init()
-        # flags = pygame.NOFRAME
         self.TILE_SIZE = 100
         self.WIDTH = ((self.TILE_SIZE+20) * (4))-10
         self.HEIGHT = ((self.TILE_SIZE+20) * (5))-10
         self.SCREEN_SIZE = (self.WIDTH, self.HEIGHT)
         self.screen = pygame.display.set_mode(self.SCREEN_SIZE)
         self.running = True
-
-
         self.board = Board()
 
         self.shortcuts = {
@@ -273,18 +314,38 @@ class App:
 
     def run(self):
         """Run the main event loop."""
-        while App.running:
+        activeScene = MainMenu()
+        gameScene = Game(self.board)
+
+        activeScene.Update()
+        activeScene.Render(self.screen)
+        pygame.display.flip()
+
+        while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    App.running = False
+                    self.running = False
 
                 if event.type == pygame.KEYDOWN:
                     self.do_shortcut(event)
                     self.board.print_board()
 
+                    if event.key == pygame.K_m:
+                        # activeScene.Terminate()
+                        activeScene = gameScene
+                        activeScene.Update()
+                        activeScene.Render(self.screen)
+                        pygame.display.flip()
+
             if self.board.is_game_over():
-                App.running = False
+                self.running = False
                 print('gameover')
+
+            
+
+            
+        
+
 
         pygame.quit()
 
@@ -297,48 +358,7 @@ class App:
         elif (k) in self.shortcuts:
             exec(self.shortcuts[k])
 
-    # def draw_board(self, board):
-    #     """
-    #     This function draws the board to the screen
-    #     """
-    #     pygame.draw.rect(screen, GAME_COLORS['BLACK'], (0,0,SCREEN_WIDTH, SCREEN_HEIGHT)) # Background
-    #     pygame.draw.rect(screen, GAME_COLORS['DARK_GRAY'], (10,30+TILE_SIZE, SCREEN_WIDTH-20, SCREEN_HEIGHT-40-TILE_SIZE)) # Tile background
-    #     tempBoard = board.copy().reshape(WIDTH,HEIGHT) 
 
-    #     # Display the tiles
-    #     for c in range(WIDTH):
-    #         for r in range(HEIGHT):
-    #             pygame.draw.rect(screen, GAME_COLORS[f'{tempBoard[r][c]}'], ((20)+(c*TILE_SIZE)+(c*10),(40+TILE_SIZE)+(r*TILE_SIZE)+(r*10), TILE_SIZE, TILE_SIZE))
-    #             if tempBoard[r][c] > 0:
-    #                 label = ariel_55.render(f'{tempBoard[r][c]}', 1, GAME_COLORS['BLACK'])
-    #                 lblRect = label.get_rect(center=(((20)+(c*TILE_SIZE)+(c*10))+(TILE_SIZE//2), ((40+TILE_SIZE)+(r*TILE_SIZE)+(r*10))+(TILE_SIZE//2)))
-    #                 screen.blit(label, lblRect)
-
-    #     # Display the score
-    #     if score > highScr:
-    #         highScr = score
-
-    #     lblScore = ariel_25.render(f'Score: {score}', 1, GAME_COLORS['LIGHT_GRAY'])
-    #     lblHighscore = ariel_25.render(f'Highscore: {highScr}', 1, GAME_COLORS['LIGHT_GRAY'])
-    #     screen.blit(lblScore, (20,TILE_SIZE))
-    #     screen.blit(lblHighscore, (20,TILE_SIZE-25))
-
-    #     # Display Controls
-    #     undo = ariel_25.render(f'Undo: CTRL + Z', 1, GAME_COLORS['LIGHT_GRAY'])
-    #     screen.blit(undo, ((SCREEN_WIDTH//2)+35,TILE_SIZE))
-    #     undo = ariel_25.render(f'New Game: CTRL + R', 1, GAME_COLORS['LIGHT_GRAY'])
-    #     screen.blit(undo, ((SCREEN_WIDTH//2)+35,TILE_SIZE-25))
-
-    #     # Display the Game title
-    #     title = ariel_55.render("2048 In Python!", 1, GAME_COLORS['LIGHT_GRAY'])
-    #     screen.blit(title, (20,20))
-
-
-class Scene:
-    def __init__(self, *args, **kwargs):
-        # Append the new scene and make it the current scene
-        App.scenes.append(self)
-        App.scene = self
 
 
 
