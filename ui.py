@@ -26,7 +26,7 @@ COLORS = {
 
 class Board:
     """Board Object for storing the position of tiles."""
-    def __init__(self, width=4, height=4, score=0, choice=[2,4], endTile=2048):
+    def __init__(self, width=4, height=4, score=0, choice=[2,2], endTile=2048):
         self.tiles = np.zeros(width*height, dtype=int)
         for i in range(len(choice)-1):
             self.tiles[i] = choice[i]
@@ -41,6 +41,8 @@ class Board:
         self.endTile = endTile
         self.lastScore = score
         self.lastTiles = self.tiles.copy()
+        self.endless = False
+        self.oldBoard = self.read_board()
 
     def place_tile(self):
         """
@@ -86,8 +88,18 @@ class Board:
         """
             This function returns if the game is over.
         """
+        if self.endless: # If it is in endless mode
+            if self.can_move():
+                self.write_highscore()
+                return False
+            else:
+                self.endless = False
+                return True
+        
         if len(np.where(self.tiles == self.endTile)[0]):
             self.write_highscore()
+            if self.can_move():
+                self.endless = True
             return True
 
         if self.can_move():
@@ -242,6 +254,22 @@ class Board:
         except:
             pass
 
+    def read_board(self, file='save'):
+        try:
+            f = open(file, "rb")
+            self.oldBoard = np.load(f)
+            f.close()
+        except:
+            self.oldBoard = self.tiles
+
+    def write_board(self, file='save'):
+        try:
+            f = open(file, "wb")
+            np.write(self.oldBoard)
+            f.close()
+        except:
+            pass
+
 class Text:
     """Create a text object."""
 
@@ -324,6 +352,12 @@ class Scene:
     def Render(self):
         pass
 
+    def Background(self):
+        board = np.array([[1024,2,4,8],[16,32,64,128],[256,64,1024,2048],[8,16,256,2],[512,64,4,'MAX']])
+        for c in range(4):
+            for r in range(5):
+                pygame.draw.rect(self.screen, COLORS[f'{board[r][c]}'], ((20)+(c*self.TILE_SIZE)+(c*10),(20)+(r*self.TILE_SIZE)+(r*10), self.TILE_SIZE, self.TILE_SIZE))
+
     def SwitchToScene(self, next_scene):
         self.next = next_scene
     
@@ -335,30 +369,44 @@ class MenuScene(Scene):
         Scene.__init__(self, screen)
         self.board = board
         self.btnNewGame = Button(text="New Game")
+        self.btnContinueGame = Button(text="Continue Game")
+        self.btnControls = Button(text="Controls")
 
     def ProcessInput(self, events, pressed_keys):
         for event in events:
             if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                 if self.btnNewGame.button_clicked(event):
-                    self.SwitchToScene(GameScene(self.board, self.screen))
+                    self.SwitchToScene(GameScene(self.screen, self.board))
+
+                if self.btnControls.button_clicked(event):
+                    self.SwitchToScene(ControlsScene(self.screen, self.board))
                     
     
     def Render(self):
+        self.Background()
+        bg = pygame.Surface(self.SCREEN_SIZE)
+        bg.set_alpha(200)
+        pygame.draw.rect(bg, COLORS['BLACK'], (0,0,self.WIDTH,self.HEIGHT))
+        self.screen.blit(bg, (0,0))
+
         # Show title
-        self.screen.fill(COLORS['BLACK'])
         lblTitle = Text('2048 in Python!', fontcolor=COLORS['LIGHT_GRAY'])
-        lblTitle.center(self.WIDTH//2, self.HEIGHT//4)
+        lblTitle.center(self.WIDTH//2, (self.TILE_SIZE//2) + 20)
         lblTitle.draw(self.screen)
 
-        lblHighscore = Text(f'Highscore: {self.board.highscore}', fontcolor=COLORS['LIGHT_GRAY'])
-        lblHighscore.center(self.WIDTH//2, self.HEIGHT//4+50)
+        lblHighscore = Text(f'Highscore: {self.board.highscore}', fontcolor=COLORS['LIGHT_GRAY'], fontsize=55)
+        lblHighscore.center(self.WIDTH//2, self.HEIGHT//5+55)
         lblHighscore.draw(self.screen)
 
         # Show New game Button
-        self.btnNewGame.draw(self.screen, (self.WIDTH//2, self.HEIGHT//2), width=self.TILE_SIZE*2.5, height=75)
+        self.btnNewGame.draw(self.screen, (self.WIDTH//2, self.HEIGHT//2), width=self.TILE_SIZE*3.5, height=75)
+        # Show Continue Game Button
+        self.btnContinueGame.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE), width=self.TILE_SIZE*3.5, height=75)
+        # Show Controls Button
+        self.btnControls.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE*2), width=self.TILE_SIZE*3.5, height=75)
    
 class GameScene(Scene):
-    def __init__(self, board, screen):
+    def __init__(self, screen, board):
         Scene.__init__(self, screen)
         self.board = board
         self.gameOver = False
@@ -385,10 +433,10 @@ class GameScene(Scene):
             if self.board.is_game_over():
                 self.gameOver = True
 
-            # self.gameOver = True
-                
+            self.board.tiles[0] = 2048
+
             if self.gameOver: # Endgame screen
-                self.SwitchToScene(EndScene(self.board, self.screen))
+                self.SwitchToScene(EndScene(self.screen, self.board))
                     
 
     def do_shortcut(self, event):
@@ -411,9 +459,14 @@ class GameScene(Scene):
         # Display the tiles
         for c in range(self.board.width):
             for r in range(self.board.height):
-                pygame.draw.rect(self.screen, COLORS[f'{tempBoard[r][c]}'], ((20)+(c*self.TILE_SIZE)+(c*10),(40+self.TILE_SIZE)+(r*self.TILE_SIZE)+(r*10), self.TILE_SIZE, self.TILE_SIZE))
+                color = tempBoard[r][c]
+                fontSize = 55
+                if tempBoard[r][c] >= self.board.endTile:
+                    color = 'MAX'
+                    fontSize = 45
+                pygame.draw.rect(self.screen, COLORS[f'{color}'], ((20)+(c*self.TILE_SIZE)+(c*10),(40+self.TILE_SIZE)+(r*self.TILE_SIZE)+(r*10), self.TILE_SIZE, self.TILE_SIZE))
                 if tempBoard[r][c] > 0:
-                    label = Text(f'{tempBoard[r][c]}', fontcolor=COLORS['BLACK'], fontsize=55)
+                    label = Text(f'{tempBoard[r][c]}', fontcolor=COLORS['BLACK'], fontsize=fontSize)
                     label.center(((20)+(c*self.TILE_SIZE)+(c*10))+(self.TILE_SIZE//2), ((40+self.TILE_SIZE)+(r*self.TILE_SIZE)+(r*10))+(self.TILE_SIZE//2))
                     label.draw(self.screen)
 
@@ -433,36 +486,83 @@ class GameScene(Scene):
         restart.draw(self.screen)
 
         # Display the Game title
-        title = Text(f'2048 in Python!',pos=(20,20), fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
+        title = Text(f'2048 in Python!',pos=(20,20), fontcolor=COLORS['LIGHT_GRAY'])
         title.draw(self.screen)
         
-
 class EndScene(Scene):
-    def __init__(self, board, screen):
+    def __init__(self, screen, board):
         Scene.__init__(self, screen)
         self.board = board
-        self.btnPlayAgain = Button(text="Main Menu")
+        self.btnMainMenu = Button(text="Main Menu")
+        self.btnContinue = Button(text="Continue")
 
     def ProcessInput(self, events, pressed_keys):
         for event in events:
             if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
-                if self.btnPlayAgain.button_clicked(event):
+                if self.btnMainMenu.button_clicked(event):
+                    self.board = Board()
+                    self.SwitchToScene(MenuScene(self.screen, self.board))
+
+                if self.board.endless:
+                    if self.btnContinue.button_clicked(event):
+                        self.SwitchToScene(GameScene(self.screen, self.board))
+    
+    def Render(self):
+        # Tint the background
+        GameScene(self.screen, self.board).Render()
+        bg = pygame.Surface(self.SCREEN_SIZE)
+        bg.set_alpha(200)
+        pygame.draw.rect(bg, COLORS['BLACK'], (0,0,self.WIDTH,self.HEIGHT))
+        self.screen.blit(bg, (0,0))
+
+        # Display game over text
+        lblGameOver = Text("Game Over!", fontcolor=COLORS['LIGHT_GRAY'])
+        lblScore = Text(f"Score: {self.board.score}", fontcolor=COLORS['LIGHT_GRAY'], fontsize=55)
+        lblHighscore = Text(f"Highscore: {self.board.highscore}", fontcolor=COLORS['LIGHT_GRAY'], fontsize=55)
+        labels = [lblGameOver,lblScore,lblHighscore]
+
+        for i in range(len(labels)):
+            labels[i].center(self.WIDTH//2, (self.HEIGHT//3)+(i*50))
+            labels[i].draw(self.screen)
+
+        # Display play again button
+        self.btnMainMenu.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE), width=self.TILE_SIZE*2.5, height=75)
+        if self.board.endless:
+            self.btnContinue.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE*2), width=self.TILE_SIZE*2.5, height=75)
+
+class ControlsScene(Scene):
+    def __init__(self, screen, board):
+        Scene.__init__(self, screen)
+        self.board = board
+        self.btnMainMenu = Button(text="Main Menu")
+
+    def ProcessInput(self, events, pressed_keys):
+        for event in events:
+            if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
+                if self.btnMainMenu.button_clicked(event):
                     self.board = Board()
                     self.SwitchToScene(MenuScene(self.screen, self.board))
     
     def Render(self):
+        self.Background()
         # Tint the background
         bg = pygame.Surface(self.SCREEN_SIZE)
-        bg.set_alpha(5)
+        bg.set_alpha(200)
         pygame.draw.rect(bg, COLORS['BLACK'], (0,0,self.WIDTH,self.HEIGHT))
-        self.screen.blit(bg, (0, 0))
+        self.screen.blit(bg, (0,0))
+        lblTitle = Text('2048 in Python!', fontcolor=COLORS['LIGHT_GRAY'])
+        lblTitle.center(self.WIDTH//2, (self.TILE_SIZE//2) + 20)
+        lblTitle.draw(self.screen)
 
         # Display game over text
-        labels = ["Game Over!", f"Your Score: {self.board.score}", f"Highscore: {self.board.highscore}"]
+        labels = ["[ W | Up-Arrow ] = Move Up", "[ S | Down-Arrow ] = Move Down", 
+                    "[ A | Left-Arrow ] = Move Left", "[ D | Right-Arrow ] = Move Right",
+                    "[ CTRL + Z ] = Undo", "[ CTRL + R ] = Restart",
+                    "[ CTRL + SHIFT + A ] = Auto"]
         for line in range(len(labels)):
-            label = Text(labels[line], fontcolor=COLORS['LIGHT_GRAY'])
-            label.center(self.WIDTH//2, (self.HEIGHT//3)+(line*50))
+            label = Text(labels[line], fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
+            label.center(self.WIDTH//2, (self.HEIGHT//3)+(line*25))
             label.draw(self.screen)
 
         # Display play again button
-        self.btnPlayAgain.draw(self.screen, (self.WIDTH//2, self.HEIGHT//2+50*3), width=self.TILE_SIZE*2.5, height=75)
+        self.btnMainMenu.draw(self.screen, (self.WIDTH//2, self.HEIGHT//2+50*3), width=self.TILE_SIZE*2.5, height=75)
