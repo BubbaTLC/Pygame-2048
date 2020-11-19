@@ -87,11 +87,13 @@ class Board:
             This function returns if the game is over.
         """
         if len(np.where(self.tiles == self.endTile)[0]):
+            self.write_highscore()
             return True
 
         if self.can_move():
             return False
-        
+
+        self.write_highscore()
         return True
 
     def move_left(self):
@@ -329,23 +331,28 @@ class Scene:
         self.SwitchToScene(None)
 
 class MenuScene(Scene):
-    def __init__(self, screen):
+    def __init__(self, screen, board):
         Scene.__init__(self, screen)
+        self.board = board
         self.btnNewGame = Button(text="New Game")
 
     def ProcessInput(self, events, pressed_keys):
         for event in events:
-            if (event.type == pygame.MOUSEBUTTONDOWN and event.button ==1 ):
+            if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                 if self.btnNewGame.button_clicked(event):
-                    self.SwitchToScene(GameScene(Board(), self.screen))
+                    self.SwitchToScene(GameScene(self.board, self.screen))
                     
     
     def Render(self):
         # Show title
         self.screen.fill(COLORS['BLACK'])
-        title = Text('2048 in Python!', fontcolor=COLORS['LIGHT_GRAY'])
-        title.center(self.WIDTH//2, self.HEIGHT//3)
-        title.draw(self.screen)
+        lblTitle = Text('2048 in Python!', fontcolor=COLORS['LIGHT_GRAY'])
+        lblTitle.center(self.WIDTH//2, self.HEIGHT//4)
+        lblTitle.draw(self.screen)
+
+        lblHighscore = Text(f'Highscore: {self.board.highscore}', fontcolor=COLORS['LIGHT_GRAY'])
+        lblHighscore.center(self.WIDTH//2, self.HEIGHT//4+50)
+        lblHighscore.draw(self.screen)
 
         # Show New game Button
         self.btnNewGame.draw(self.screen, (self.WIDTH//2, self.HEIGHT//2), width=self.TILE_SIZE*2.5, height=75)
@@ -354,6 +361,7 @@ class GameScene(Scene):
     def __init__(self, board, screen):
         Scene.__init__(self, screen)
         self.board = board
+        self.gameOver = False
         self.shortcuts = {
             (pygame.K_w):       'self.board.move_up()',
             (pygame.K_s):       'self.board.move_down()',
@@ -364,7 +372,7 @@ class GameScene(Scene):
             (pygame.K_LEFT):    'self.board.move_left()',
             (pygame.K_RIGHT):   'self.board.move_right()',
             (pygame.K_z, 4160): 'self.board.tiles = self.board.lastTiles.copy()\nself.board.score = self.board.lastScore',
-            (pygame.K_r, 4160): 'self.board = Board()',
+            (pygame.K_r, 4160): 'self.board.write_highscore()\nself.board = Board()',
             (pygame.K_a, 4161): 'print("ctrl+shift+a")',
         }
 
@@ -375,11 +383,11 @@ class GameScene(Scene):
                 self.board.print_board()
 
             if self.board.is_game_over():
-                    gameOver = True
+                self.gameOver = True
 
-            gameOver = True
+            # self.gameOver = True
                 
-            if gameOver: # Endgame screen
+            if self.gameOver: # Endgame screen
                 self.SwitchToScene(EndScene(self.board, self.screen))
                     
 
@@ -396,12 +404,6 @@ class GameScene(Scene):
         pass
     
     def Render(self):
-        self.draw_board()
-
-    def draw_board(self):
-        """
-        This function draws the board to the screen
-        """
         pygame.draw.rect(self.screen, COLORS['BLACK'], (0,0, self.WIDTH, self.HEIGHT)) # Background
         pygame.draw.rect(self.screen, COLORS['DARK_GRAY'], (10,30+self.TILE_SIZE, self.WIDTH-20, self.HEIGHT-40-self.TILE_SIZE)) # Tile background
         tempBoard = self.board.tiles.copy().reshape(self.board.width,self.board.height) 
@@ -433,20 +435,25 @@ class GameScene(Scene):
         # Display the Game title
         title = Text(f'2048 in Python!',pos=(20,20), fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
         title.draw(self.screen)
+        
 
 class EndScene(Scene):
     def __init__(self, board, screen):
         Scene.__init__(self, screen)
         self.board = board
-        self.btnPlayAgain = Button(text="Play Again")
+        self.btnPlayAgain = Button(text="Main Menu")
 
     def ProcessInput(self, events, pressed_keys):
-        pass
+        for event in events:
+            if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
+                if self.btnPlayAgain.button_clicked(event):
+                    self.board = Board()
+                    self.SwitchToScene(MenuScene(self.screen, self.board))
     
     def Render(self):
         # Tint the background
         bg = pygame.Surface(self.SCREEN_SIZE)
-        bg.set_alpha(1)
+        bg.set_alpha(5)
         pygame.draw.rect(bg, COLORS['BLACK'], (0,0,self.WIDTH,self.HEIGHT))
         self.screen.blit(bg, (0, 0))
 

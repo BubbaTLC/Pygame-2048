@@ -17,7 +17,7 @@ class App:
 
     def run(self):
         """Run the main event loop."""
-        activeScene = MenuScene(self.screen)
+        activeScene = MenuScene(self.screen, self.board)
         clock = pygame.time.Clock()
 
         while activeScene != None:
@@ -28,6 +28,7 @@ class App:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
+                    self.board.write_highscore()
 
                 if not self.running:
                     activeScene.Terminate()
@@ -37,7 +38,7 @@ class App:
             activeScene.ProcessInput(filteredEvents, pressedKeys)
             activeScene.Update()
             activeScene.Render()
-            activeScene = activeScene.next # ! Bug: Deleting this line prevents the ability to close
+            activeScene = activeScene.next
             pygame.display.flip()
             clock.tick(60)
             
