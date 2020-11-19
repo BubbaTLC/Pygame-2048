@@ -31,6 +31,7 @@ class Board:
         for i in range(len(choice)-1):
             self.tiles[i] = choice[i]
         np.random.shuffle(self.tiles)
+        self.tiles[0] = 2048
 
         self.width = width
         self.height = height
@@ -42,7 +43,7 @@ class Board:
         self.lastScore = score
         self.lastTiles = self.tiles.copy()
         self.endless = False
-        self.oldBoard = self.read_board()
+        self.read_board()
 
     def place_tile(self):
         """
@@ -236,7 +237,7 @@ class Board:
         if not self.is_game_over() and not compare.all():
             self.place_tile()
 
-    def read_highscore(self, file='highscore.txt'):
+    def read_highscore(self, file='data\\highscore.txt'):
         try:
             f = open(file, "rt")
             line = f.readline()
@@ -245,7 +246,7 @@ class Board:
         except ValueError:
             self.highscore = 0
 
-    def write_highscore(self, file='highscore.txt'):
+    def write_highscore(self, file='data\\highscore.txt'):
         try:
             if self.highscore <= self.score:
                 f = open(file, "wt")
@@ -254,21 +255,22 @@ class Board:
         except:
             pass
 
-    def read_board(self, file='save'):
+    def read_board(self, file='data\\save.npy'):
         try:
-            f = open(file, "rb")
-            self.oldBoard = np.load(f)
-            f.close()
+            print("Read Board")
+            self.lastTiles = np.load(file)
+            print(self.lastTiles)
         except:
-            self.oldBoard = self.tiles
+            print('Error Loading Board')
+            self.lastTiles = self.tiles
 
-    def write_board(self, file='save'):
+    def write_board(self, file='data\\save.npy'):
         try:
-            f = open(file, "wb")
-            np.write(self.oldBoard)
-            f.close()
+            np.save(file, self.lastTiles)
+            print("Wrote Board")
+            print(self.lastTiles)
         except:
-            pass
+            print('Error Saving Board')
 
 class Text:
     """Create a text object."""
@@ -378,6 +380,10 @@ class MenuScene(Scene):
                 if self.btnNewGame.button_clicked(event):
                     self.SwitchToScene(GameScene(self.screen, self.board))
 
+                if self.btnContinueGame.button_clicked(event):
+                    self.board.tiles = self.board.lastTiles
+                    self.SwitchToScene(GameScene(self.screen, self.board))
+
                 if self.btnControls.button_clicked(event):
                     self.SwitchToScene(ControlsScene(self.screen, self.board))
                     
@@ -419,7 +425,7 @@ class GameScene(Scene):
             (pygame.K_DOWN):    'self.board.move_down()',
             (pygame.K_LEFT):    'self.board.move_left()',
             (pygame.K_RIGHT):   'self.board.move_right()',
-            (pygame.K_z, 4160): 'self.board.tiles = self.board.lastTiles.copy()\nself.board.score = self.board.lastScore',
+            (pygame.K_z, 4160): 'self.board.tiles = self.board.lastTiles.copy()\nself.board.score = self.board.lastScore\nself.board.write_board()',
             (pygame.K_r, 4160): 'self.board.write_highscore()\nself.board = Board()',
             (pygame.K_a, 4161): 'print("ctrl+shift+a")',
         }
@@ -428,12 +434,9 @@ class GameScene(Scene):
         for event in events:
             if event.type == pygame.KEYDOWN:
                 self.do_shortcut(event)
-                self.board.print_board()
 
             if self.board.is_game_over():
                 self.gameOver = True
-
-            self.board.tiles[0] = 2048
 
             if self.gameOver: # Endgame screen
                 self.SwitchToScene(EndScene(self.screen, self.board))
@@ -506,6 +509,7 @@ class EndScene(Scene):
                 if self.board.endless:
                     if self.btnContinue.button_clicked(event):
                         self.SwitchToScene(GameScene(self.screen, self.board))
+                        self.board.write_board()
     
     def Render(self):
         # Tint the background

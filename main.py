@@ -29,6 +29,7 @@ class App:
                 if event.type == pygame.QUIT:
                     self.running = False
                     self.board.write_highscore()
+                    self.board.write_board()
 
                 if not self.running:
                     activeScene.Terminate()
