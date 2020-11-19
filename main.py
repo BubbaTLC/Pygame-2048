@@ -17,10 +17,8 @@ class App:
 
     def run(self):
         """Run the main event loop."""
-        mainMenu = MenuScene(self.screen)
-        gameScene = GameScene(self.board,self.screen)
-        endScene = EndScene(self.board,self.screen)
-        activeScene = mainMenu
+        activeScene = MenuScene(self.screen)
+        clock = pygame.time.Clock()
 
         while activeScene != None:
             pressedKeys = pygame.key.get_pressed()
@@ -30,16 +28,6 @@ class App:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-                
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_COMMA: # Switch Scene
-                        activeScene = mainMenu
-
-                    if event.key == pygame.K_PERIOD: # Switch Scene
-                        activeScene = gameScene
-
-                    if event.key == pygame.K_SLASH: # Switch Scene
-                        activeScene = endScene
 
                 if not self.running:
                     activeScene.Terminate()
@@ -47,9 +35,12 @@ class App:
                     filteredEvents.append(event)
             
             activeScene.ProcessInput(filteredEvents, pressedKeys)
+            activeScene.Update()
             activeScene.Render()
-            activeScene = activeScene.next
+            activeScene = activeScene.next # ! Bug: Deleting this line prevents the ability to close
             pygame.display.flip()
+            clock.tick(60)
+            
 
         pygame.quit()
 

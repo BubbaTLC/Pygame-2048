@@ -270,10 +270,8 @@ class Text:
         self.rect = self.img.get_rect(center=(x,y))
 
 class Button():
-    def __init__(self, text="Button", pos=(0,0)):
+    def __init__(self, text="Button"):
         self.text = text
-        self.x = pos[0]
-        self.y = pos[1]
 
     def draw(self, screen, pos, width=50, height=25, fontSize=55, primaryColor=COLORS['DARK_GRAY'], secondaryColor=COLORS['LIGHT_GRAY']):
         # Display button
@@ -321,7 +319,7 @@ class Scene:
     def Update(self):
         pass
 
-    def Render(self, screen):
+    def Render(self):
         pass
 
     def SwitchToScene(self, next_scene):
@@ -340,6 +338,7 @@ class MenuScene(Scene):
             if (event.type == pygame.MOUSEBUTTONDOWN and event.button ==1 ):
                 if self.btnNewGame.button_clicked(event):
                     self.SwitchToScene(GameScene(Board(), self.screen))
+                    
     
     def Render(self):
         # Show title
@@ -374,6 +373,15 @@ class GameScene(Scene):
             if event.type == pygame.KEYDOWN:
                 self.do_shortcut(event)
                 self.board.print_board()
+
+            if self.board.is_game_over():
+                    gameOver = True
+
+            gameOver = True
+                
+            if gameOver: # Endgame screen
+                self.SwitchToScene(EndScene(self.board, self.screen))
+                    
 
     def do_shortcut(self, event):
         """Find the the key/mod combination in the dictionary and execute the cmd."""
@@ -430,10 +438,24 @@ class EndScene(Scene):
     def __init__(self, board, screen):
         Scene.__init__(self, screen)
         self.board = board
+        self.btnPlayAgain = Button(text="Play Again")
 
     def ProcessInput(self, events, pressed_keys):
         pass
     
     def Render(self):
-        # For the sake of brevity, the title scene is a blank red screen
-        self.screen.fill((0, 0, 255))
+        # Tint the background
+        bg = pygame.Surface(self.SCREEN_SIZE)
+        bg.set_alpha(1)
+        pygame.draw.rect(bg, COLORS['BLACK'], (0,0,self.WIDTH,self.HEIGHT))
+        self.screen.blit(bg, (0, 0))
+
+        # Display game over text
+        labels = ["Game Over!", f"Your Score: {self.board.score}", f"Highscore: {self.board.highscore}"]
+        for line in range(len(labels)):
+            label = Text(labels[line], fontcolor=COLORS['LIGHT_GRAY'])
+            label.center(self.WIDTH//2, (self.HEIGHT//3)+(line*50))
+            label.draw(self.screen)
+
+        # Display play again button
+        self.btnPlayAgain.draw(self.screen, (self.WIDTH//2, self.HEIGHT//2+50*3), width=self.TILE_SIZE*2.5, height=75)
