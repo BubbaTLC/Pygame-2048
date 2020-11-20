@@ -31,7 +31,7 @@ class Board:
         for i in range(len(choice)-1):
             self.tiles[i] = choice[i]
         np.random.shuffle(self.tiles)
-        self.tiles[0] = 2048
+        # self.tiles[0] = 2048
 
         self.width = width
         self.height = height
@@ -258,17 +258,21 @@ class Board:
     def read_board(self, file='data\\save.npy'):
         try:
             print("Read Board")
-            self.lastTiles = np.load(file)
+            a = np.load(file)
+            self.lastTiles = a[:16]
+            self.score = a[16]
             print(self.lastTiles)
+            print(self.score)
         except:
             print('Error Loading Board')
             self.lastTiles = self.tiles
 
     def write_board(self, file='data\\save.npy'):
         try:
-            np.save(file, self.lastTiles)
+            a = self.tiles.copy()
+            a = np.append(a, self.score)
+            np.save(file, a)
             print("Wrote Board")
-            print(self.lastTiles)
         except:
             print('Error Saving Board')
 
@@ -435,7 +439,7 @@ class GameScene(Scene):
             if event.type == pygame.KEYDOWN:
                 self.do_shortcut(event)
 
-            if self.board.is_game_over():
+            if self.board.is_game_over() and not self.board.endless:
                 self.gameOver = True
 
             if self.gameOver: # Endgame screen
