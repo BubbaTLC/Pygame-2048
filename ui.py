@@ -26,10 +26,11 @@ COLORS = {
 
 class Board:
     """Board Object for storing the position of tiles."""
-    def __init__(self, width=4, height=4, score=0, choice=[2,2], endTile=2048):
+    def __init__(self, width=4, height=4, score=0, choice=[2,4], endTile=2048):
         self.tiles = np.zeros(width*height, dtype=int)
-        for i in range(len(choice)-1):
+        for i in range(len(choice)):
             self.tiles[i] = choice[i]
+            print(i)
         np.random.shuffle(self.tiles)
         # self.tiles[0] = 2048
 
@@ -43,7 +44,9 @@ class Board:
         self.lastScore = score
         self.lastTiles = self.tiles.copy()
         self.endless = False
-        self.read_board()
+
+    def restart(self):
+        self.__init__()
 
     def place_tile(self):
         """
@@ -260,9 +263,9 @@ class Board:
             print("Read Board")
             a = np.load(file)
             self.lastTiles = a[:16]
-            self.score = a[16]
+            self.lastScore = a[16]
             print(self.lastTiles)
-            print(self.score)
+            print(self.lastScore)
         except:
             print('Error Loading Board')
             self.lastTiles = self.tiles
@@ -272,7 +275,7 @@ class Board:
             a = self.tiles.copy()
             a = np.append(a, self.score)
             np.save(file, a)
-            print("Wrote Board")
+            print(f"Wrote Board {a}")
         except:
             print('Error Saving Board')
 
@@ -348,6 +351,9 @@ class Scene:
         self.HEIGHT = ((self.TILE_SIZE+20) * (5))-10
         self.SCREEN_SIZE = (self.WIDTH, self.HEIGHT)
         self.screen = screen
+        self.bgTiles = np.array([2,2,4,4,8,8,16,16,32,32,64,64,128,128,256,256,512,512,1024,2048])
+        np.random.shuffle(self.bgTiles)
+        self.bgTiles = self.bgTiles.reshape(5,4)
 
     def ProcessInput(self, events, pressed_keys):
         pass
@@ -359,10 +365,9 @@ class Scene:
         pass
 
     def Background(self):
-        board = np.array([[1024,2,4,8],[16,32,64,128],[256,64,1024,2048],[8,16,256,2],[512,64,4,'MAX']])
         for c in range(4):
             for r in range(5):
-                pygame.draw.rect(self.screen, COLORS[f'{board[r][c]}'], ((20)+(c*self.TILE_SIZE)+(c*10),(20)+(r*self.TILE_SIZE)+(r*10), self.TILE_SIZE, self.TILE_SIZE))
+                pygame.draw.rect(self.screen, COLORS[f'{self.bgTiles[r][c]}'], ((20)+(c*self.TILE_SIZE)+(c*10),(20)+(r*self.TILE_SIZE)+(r*10), self.TILE_SIZE, self.TILE_SIZE))
 
     def SwitchToScene(self, next_scene):
         self.next = next_scene
@@ -382,10 +387,13 @@ class MenuScene(Scene):
         for event in events:
             if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                 if self.btnNewGame.button_clicked(event):
+                    self.board.lastTiles = self.board.tiles
+                    self.board.lastScore = self.board.score
                     self.SwitchToScene(GameScene(self.screen, self.board))
 
                 if self.btnContinueGame.button_clicked(event):
                     self.board.tiles = self.board.lastTiles
+                    self.board.score = self.board.lastScore
                     self.SwitchToScene(GameScene(self.screen, self.board))
 
                 if self.btnControls.button_clicked(event):
@@ -429,8 +437,8 @@ class GameScene(Scene):
             (pygame.K_DOWN):    'self.board.move_down()',
             (pygame.K_LEFT):    'self.board.move_left()',
             (pygame.K_RIGHT):   'self.board.move_right()',
-            (pygame.K_z, 4160): 'self.board.tiles = self.board.lastTiles.copy()\nself.board.score = self.board.lastScore\nself.board.write_board()',
-            (pygame.K_r, 4160): 'self.board.write_highscore()\nself.board = Board()',
+            (pygame.K_z, 4160): 'self.board.tiles = self.board.lastTiles.copy()\nself.board.score = self.board.lastScore',
+            (pygame.K_r, 4160): 'self.board.restart()\nself.board.write_board()\nself.board.write_highscore()\n',
             (pygame.K_a, 4161): 'print("ctrl+shift+a")',
         }
 
@@ -507,7 +515,7 @@ class EndScene(Scene):
         for event in events:
             if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                 if self.btnMainMenu.button_clicked(event):
-                    self.board = Board()
+                    self.board.restart()
                     self.SwitchToScene(MenuScene(self.screen, self.board))
 
                 if self.board.endless:
@@ -548,7 +556,7 @@ class ControlsScene(Scene):
         for event in events:
             if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                 if self.btnMainMenu.button_clicked(event):
-                    self.board = Board()
+                    self.board.restart()
                     self.SwitchToScene(MenuScene(self.screen, self.board))
     
     def Render(self):

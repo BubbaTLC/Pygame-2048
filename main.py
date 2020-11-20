@@ -17,6 +17,7 @@ class App:
 
     def run(self):
         """Run the main event loop."""
+        self.board.read_board()
         activeScene = MenuScene(self.screen, self.board)
         clock = pygame.time.Clock()
 
