@@ -32,7 +32,8 @@ class Board:
             self.tiles[i] = choice[i]
             print(i)
         np.random.shuffle(self.tiles)
-        # self.tiles[0] = 2048
+        # self.tiles[0] = 1024
+        # self.tiles[1] = 1024
 
         self.width = width
         self.height = height
@@ -99,18 +100,15 @@ class Board:
             else:
                 self.endless = False
                 return True
-        
-        if len(np.where(self.tiles == self.endTile)[0]):
-            self.write_highscore()
+        else:
+            if len(np.where(self.tiles == self.endTile)[0]):
+                self.write_highscore()
+                return True
+
             if self.can_move():
-                self.endless = True
-            return True
-
-        if self.can_move():
-            return False
-
-        self.write_highscore()
+                return False
         return True
+
 
     def move_left(self):
         """
@@ -260,12 +258,10 @@ class Board:
 
     def read_board(self, file='data\\save.npy'):
         try:
-            print("Read Board")
             a = np.load(file)
             self.lastTiles = a[:16]
             self.lastScore = a[16]
-            print(self.lastTiles)
-            print(self.lastScore)
+            print(f"Read Board [{self.lastScore}] {self.lastTiles}")
         except:
             print('Error Loading Board')
             self.lastTiles = self.tiles
@@ -447,11 +443,10 @@ class GameScene(Scene):
             if event.type == pygame.KEYDOWN:
                 self.do_shortcut(event)
 
-            if self.board.is_game_over() and not self.board.endless:
-                self.gameOver = True
-
-            if self.gameOver: # Endgame screen
+            if self.board.is_game_over():
                 self.SwitchToScene(EndScene(self.screen, self.board))
+                if self.board.can_move():
+                    self.board.endless = True
                     
 
     def do_shortcut(self, event):

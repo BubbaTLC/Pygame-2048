@@ -7,6 +7,9 @@ class App:
     def __init__(self):
         """Initialize pygame and the application."""
         pygame.init()
+        pygame.display.set_caption("2048 in Python!")
+        icon = pygame.image.load('images\\2048_white.png')
+        pygame.display.set_icon(icon)
         self.TILE_SIZE = 100
         self.WIDTH = ((self.TILE_SIZE+20) * (4))-10
         self.HEIGHT = ((self.TILE_SIZE+20) * (5))-10
