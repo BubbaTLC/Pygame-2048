@@ -30,7 +30,6 @@ class Board:
         self.tiles = np.zeros(width*height, dtype=int)
         for i in range(len(choice)):
             self.tiles[i] = choice[i]
-            print(i)
         np.random.shuffle(self.tiles)
         # self.tiles[0] = 1024
         # self.tiles[1] = 1024
@@ -108,7 +107,6 @@ class Board:
             if self.can_move():
                 return False
         return True
-
 
     def move_left(self):
         """
@@ -442,6 +440,7 @@ class GameScene(Scene):
         for event in events:
             if event.type == pygame.KEYDOWN:
                 self.do_shortcut(event)
+                self.board.write_highscore()
 
             if self.board.is_game_over():
                 self.SwitchToScene(EndScene(self.screen, self.board))
@@ -568,12 +567,12 @@ class ControlsScene(Scene):
         # Display game over text
         labels = ["[ W | Up-Arrow ] = Move Up", "[ S | Down-Arrow ] = Move Down", 
                     "[ A | Left-Arrow ] = Move Left", "[ D | Right-Arrow ] = Move Right",
-                    "[ CTRL + Z ] = Undo", "[ CTRL + R ] = Restart",
-                    "[ CTRL + SHIFT + A ] = Auto"]
+                    "[ CTRL + Z ] = Undo", "[ CTRL + R ] = Restart"]
+        # "[ CTRL + SHIFT + A ] = Auto"
         for line in range(len(labels)):
             label = Text(labels[line], fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
             label.center(self.WIDTH//2, (self.HEIGHT//3)+(line*25))
             label.draw(self.screen)
 
         # Display play again button
-        self.btnMainMenu.draw(self.screen, (self.WIDTH//2, self.HEIGHT//2+50*3), width=self.TILE_SIZE*2.5, height=75)
+        self.btnMainMenu.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE*2), width=self.TILE_SIZE*3.5, height=75)
