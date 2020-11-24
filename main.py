@@ -20,7 +20,6 @@ class App:
 
     def run(self):
         """Run the main event loop."""
-        self.board.read_board()
         activeScene = MenuScene(self.screen, self.board)
         clock = pygame.time.Clock()
 
@@ -32,8 +31,7 @@ class App:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-                    self.board.write_highscore()
-                    self.board.write_board()
+                    self.board.save_game()
 
                 if not self.running:
                     activeScene.Terminate()

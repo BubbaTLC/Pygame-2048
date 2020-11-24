@@ -31,19 +31,19 @@ class Board:
         for i in range(len(choice)):
             self.tiles[i] = choice[i]
         np.random.shuffle(self.tiles)
-        # self.tiles[0] = 1024
-        # self.tiles[1] = 1024
+        self.tiles[0] = 1024
+        self.tiles[1] = 1024
 
         self.width = width
         self.height = height
         self.choice = choice
         self.score = score
         self.highscore = 0
-        self.read_highscore()
         self.endTile = endTile
         self.lastScore = score
         self.lastTiles = self.tiles.copy()
         self.endless = False
+        self.read_highscore()
 
     def restart(self):
         self.__init__()
@@ -94,14 +94,12 @@ class Board:
         """
         if self.endless: # If it is in endless mode
             if self.can_move():
-                self.write_highscore()
                 return False
             else:
                 self.endless = False
                 return True
         else:
             if len(np.where(self.tiles == self.endTile)[0]):
-                self.write_highscore()
                 return True
 
             if self.can_move():
@@ -242,6 +240,7 @@ class Board:
             line = f.readline()
             f.close()
             self.highscore = int(line)
+            print(f"Read Highscore: {self.highscore}")
         except ValueError:
             self.highscore = 0
 
@@ -249,8 +248,9 @@ class Board:
         try:
             if self.highscore <= self.score:
                 f = open(file, "wt")
-                f.writelines(f"{self.score}")
+                f.writelines(f"{self.highscore}")
                 f.close()
+                print(f"Wrote Highscore: {self.highscore}")
         except:
             pass
 
@@ -272,6 +272,18 @@ class Board:
             print(f"Wrote Board {a}")
         except:
             print('Error Saving Board')
+
+    def save_game(self):
+        self.write_highscore()
+        self.write_board()
+
+    def load_game(self):
+        self.read_highscore()
+        self.read_board()
+
+    def continue_game(self):
+        self.tiles = self.lastTiles
+        self.score = self.lastScore
 
 class Text:
     """Create a text object."""
@@ -373,6 +385,7 @@ class MenuScene(Scene):
     def __init__(self, screen, board):
         Scene.__init__(self, screen)
         self.board = board
+        self.board.load_game()
         self.btnNewGame = Button(text="New Game")
         self.btnContinueGame = Button(text="Continue Game")
         self.btnControls = Button(text="Controls")
@@ -381,13 +394,12 @@ class MenuScene(Scene):
         for event in events:
             if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
                 if self.btnNewGame.button_clicked(event):
-                    self.board.lastTiles = self.board.tiles
-                    self.board.lastScore = self.board.score
+                    self.board.restart()
                     self.SwitchToScene(GameScene(self.screen, self.board))
 
                 if self.btnContinueGame.button_clicked(event):
-                    self.board.tiles = self.board.lastTiles
-                    self.board.score = self.board.lastScore
+                    self.board.load_game()
+                    self.board.continue_game()
                     self.SwitchToScene(GameScene(self.screen, self.board))
 
                 if self.btnControls.button_clicked(event):
@@ -432,7 +444,7 @@ class GameScene(Scene):
             (pygame.K_LEFT):    'self.board.move_left()',
             (pygame.K_RIGHT):   'self.board.move_right()',
             (pygame.K_z, 4160): 'self.board.tiles = self.board.lastTiles.copy()\nself.board.score = self.board.lastScore',
-            (pygame.K_r, 4160): 'self.board.restart()\nself.board.write_board()\nself.board.write_highscore()\n',
+            (pygame.K_m, 4160): 'self.board.save_game()\nself.SwitchToScene(MenuScene(self.screen, self.board))',
             (pygame.K_a, 4161): 'print("ctrl+shift+a")',
         }
 
@@ -440,9 +452,9 @@ class GameScene(Scene):
         for event in events:
             if event.type == pygame.KEYDOWN:
                 self.do_shortcut(event)
-                self.board.write_highscore()
 
             if self.board.is_game_over():
+                self.board.save_game()
                 self.SwitchToScene(EndScene(self.screen, self.board))
                 if self.board.can_move():
                     self.board.endless = True
@@ -491,7 +503,7 @@ class GameScene(Scene):
         # Display Controls
         undo = Text(f'Undo: CTRL + Z',pos=((self.WIDTH//2)+35,self.TILE_SIZE), fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
         undo.draw(self.screen)
-        restart = Text(f'New Game: CTRL + R',pos=((self.WIDTH//2)+35,self.TILE_SIZE-25), fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
+        restart = Text(f'Main Menu: CTRL + M',pos=((self.WIDTH//2)+35,self.TILE_SIZE-25), fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
         restart.draw(self.screen)
 
         # Display the Game title
@@ -514,8 +526,10 @@ class EndScene(Scene):
 
                 if self.board.endless:
                     if self.btnContinue.button_clicked(event):
+                        self.board.save_game()
                         self.SwitchToScene(GameScene(self.screen, self.board))
-                        self.board.write_board()
+                        
+
     
     def Render(self):
         # Tint the background
@@ -532,13 +546,13 @@ class EndScene(Scene):
         labels = [lblGameOver,lblScore,lblHighscore]
 
         for i in range(len(labels)):
-            labels[i].center(self.WIDTH//2, (self.HEIGHT//3)+(i*50))
+            labels[i].center(self.WIDTH//2, self.TILE_SIZE+(i*50))
             labels[i].draw(self.screen)
 
         # Display play again button
-        self.btnMainMenu.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE), width=self.TILE_SIZE*2.5, height=75)
+        self.btnMainMenu.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE), width=self.TILE_SIZE*3.5, height=75)
         if self.board.endless:
-            self.btnContinue.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE*2), width=self.TILE_SIZE*2.5, height=75)
+            self.btnContinue.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE*2), width=self.TILE_SIZE*3.5, height=75)
 
 class ControlsScene(Scene):
     def __init__(self, screen, board):
@@ -567,12 +581,12 @@ class ControlsScene(Scene):
         # Display game over text
         labels = ["[ W | Up-Arrow ] = Move Up", "[ S | Down-Arrow ] = Move Down", 
                     "[ A | Left-Arrow ] = Move Left", "[ D | Right-Arrow ] = Move Right",
-                    "[ CTRL + Z ] = Undo", "[ CTRL + R ] = Restart"]
+                    "[ CTRL + Z ] = Undo", "[ CTRL + M ] = Main Menu"]
         # "[ CTRL + SHIFT + A ] = Auto"
         for line in range(len(labels)):
             label = Text(labels[line], fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
             label.center(self.WIDTH//2, (self.HEIGHT//3)+(line*25))
             label.draw(self.screen)
 
-        # Display play again button
+        # Display main menu button
         self.btnMainMenu.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE*2), width=self.TILE_SIZE*3.5, height=75)
