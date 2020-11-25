@@ -5,11 +5,11 @@ import numpy as np
 
 
 COLORS = {
-    "BLACK" : (0,0,0),
-    "WHITE" : (255,255,255),
-    "DARK_GRAY": (64,64,64),
-    "LIGHT_GRAY": (176,176,176),
-    "0": (88,88,88),
+    "BLACK": (0, 0, 0),
+    "WHITE": (255, 255, 255),
+    "DARK_GRAY": (64, 64, 64),
+    "LIGHT_GRAY": (176, 176, 176),
+    "0": (88, 88, 88),
     "2": (204, 102, 0),
     "4": (204, 153, 0),
     "8": (204, 204, 0),
@@ -21,18 +21,20 @@ COLORS = {
     "512": (0, 0, 204),
     "1024": (102, 0, 204),
     "2048": (204, 0, 204),
-    "MAX" : (153, 0, 153)
+    "MAX": (153, 0, 153)
 }
+
 
 class Board:
     """Board Object for storing the position of tiles."""
-    def __init__(self, width=4, height=4, score=0, choice=[2,4], endTile=2048):
+
+    def __init__(self, width=4, height=4, score=0, choice=[2, 4], endTile=2048):
         self.tiles = np.zeros(width*height, dtype=int)
         for i in range(len(choice)):
             self.tiles[i] = choice[i]
         np.random.shuffle(self.tiles)
-        self.tiles[0] = 1024
-        self.tiles[1] = 1024
+        # self.tiles[0] = 1024
+        # self.tiles[1] = 1024
 
         self.width = width
         self.height = height
@@ -57,7 +59,7 @@ class Board:
         possiblePos = np.where(self.tiles == 0)
         if len(possiblePos[0]) == 0:
             return
-        
+
         pos = np.random.choice(possiblePos[0])
         self.tiles[pos] = tile
 
@@ -72,13 +74,13 @@ class Board:
         for r in range(len(self.tiles) - self.width):
             if self.tiles[r] == self.tiles[r+self.width]:
                 return True
-        
+
         # Check if the tile to the side is the same
         for r in range(0, len(self.tiles)-1, self.width):
             for c in range(0, self.width-1, 1):
                 if self.tiles[r+(c)] == self.tiles[r+(c+1)]:
                     return True
-        
+
         return False
 
     def print_board(self):
@@ -86,13 +88,13 @@ class Board:
         This functions prints the self.tiles and the score to the console.
         """
         print(f"Score: {self.score}")
-        print(self.tiles.copy().reshape(self.width,self.height))
+        print(self.tiles.copy().reshape(self.width, self.height))
 
     def is_game_over(self):
         """
             This function returns if the game is over.
         """
-        if self.endless: # If it is in endless mode
+        if self.endless:  # If it is in endless mode
             if self.can_move():
                 return False
             else:
@@ -137,8 +139,8 @@ class Board:
         compare = self.lastTiles == self.tiles
 
         if not self.is_game_over() and not compare.all():
-            self.place_tile()      
-    
+            self.place_tile()
+
     def move_right(self):
         """
         This function will shifts the tiles to the right.
@@ -212,19 +214,19 @@ class Board:
         self.lastScore = self.score
 
         for i in range(self.height-1):
-            for c in range(len(self.tiles)-1, self.height-1, -1): # Move tiles
+            for c in range(len(self.tiles)-1, self.height-1, -1):  # Move tiles
                 if self.tiles[c] == 0:
                     self.tiles[c] = self.tiles[c-self.height]
                     self.tiles[c-self.height] = 0
 
-        for c in range(len(self.tiles)-1, self.height-1, -1): # Combine tiles
+        for c in range(len(self.tiles)-1, self.height-1, -1):  # Combine tiles
             if self.tiles[c] == self.tiles[c-self.height]:
                 self.tiles[c] = self.tiles[c] + self.tiles[c-self.height]
                 self.tiles[c-self.height] = 0
                 self.score += self.tiles[c]
 
         for i in range(self.height-1):
-            for c in range(len(self.tiles)-1, self.height-1, -1): # Move tiles
+            for c in range(len(self.tiles)-1, self.height-1, -1):  # Move tiles
                 if self.tiles[c] == 0:
                     self.tiles[c] = self.tiles[c-self.height]
                     self.tiles[c-self.height] = 0
@@ -285,10 +287,11 @@ class Board:
         self.tiles = self.lastTiles
         self.score = self.lastScore
 
+
 class Text:
     """Create a text object."""
 
-    def __init__(self, text, pos=(0,0), fontcolor=Color('black'), fontsize=72, fontname='ariel'):
+    def __init__(self, text, pos=(0, 0), fontcolor=Color('black'), fontsize=72, fontname='ariel'):
         self.text = text
         self.pos = pos
         self.fontname = fontname
@@ -311,8 +314,9 @@ class Text:
         """Draw the text image to the screen."""
         screen.blit(self.img, self.rect)
 
-    def center(self,x,y):
-        self.rect = self.img.get_rect(center=(x,y))
+    def center(self, x, y):
+        self.rect = self.img.get_rect(center=(x, y))
+
 
 class Button():
     def __init__(self, text="Button"):
@@ -323,14 +327,14 @@ class Button():
         centerX = pos[0]
         centerY = pos[1]
 
-        rect1 = Rect(0,0,0,0)
-        rect1.size=(width, height)
+        rect1 = Rect(0, 0, 0, 0)
+        rect1.size = (width, height)
         rect1.centerx = centerX
         rect1.centery = centerY
         pygame.draw.rect(screen, secondaryColor, rect1)
 
-        self.rect2 = Rect(0,0,0,0)
-        self.rect2.size=(width-10, height-10)
+        self.rect2 = Rect(0, 0, 0, 0)
+        self.rect2.size = (width-10, height-10)
         self.rect2.centerx = (centerX)
         self.rect2.centery = (centerY)
         pygame.draw.rect(screen, primaryColor, self.rect2)
@@ -349,6 +353,7 @@ class Button():
 
         return False
 
+
 class Scene:
     def __init__(self, screen):
         self.next = self
@@ -357,9 +362,10 @@ class Scene:
         self.HEIGHT = ((self.TILE_SIZE+20) * (5))-10
         self.SCREEN_SIZE = (self.WIDTH, self.HEIGHT)
         self.screen = screen
-        self.bgTiles = np.array([2,2,4,4,8,8,16,16,32,32,64,64,128,128,256,256,512,512,1024,2048])
+        self.bgTiles = np.array(
+            [2, 2, 4, 4, 8, 8, 16, 16, 32, 32, 64, 64, 128, 128, 256, 256, 512, 512, 1024, 2048])
         np.random.shuffle(self.bgTiles)
-        self.bgTiles = self.bgTiles.reshape(5,4)
+        self.bgTiles = self.bgTiles.reshape(5, 4)
 
     def ProcessInput(self, events, pressed_keys):
         pass
@@ -373,13 +379,15 @@ class Scene:
     def Background(self):
         for c in range(4):
             for r in range(5):
-                pygame.draw.rect(self.screen, COLORS[f'{self.bgTiles[r][c]}'], ((20)+(c*self.TILE_SIZE)+(c*10),(20)+(r*self.TILE_SIZE)+(r*10), self.TILE_SIZE, self.TILE_SIZE))
+                pygame.draw.rect(self.screen, COLORS[f'{self.bgTiles[r][c]}'], ((
+                    20)+(c*self.TILE_SIZE)+(c*10), (20)+(r*self.TILE_SIZE)+(r*10), self.TILE_SIZE, self.TILE_SIZE))
 
     def SwitchToScene(self, next_scene):
         self.next = next_scene
-    
+
     def Terminate(self):
         self.SwitchToScene(None)
+
 
 class MenuScene(Scene):
     def __init__(self, screen, board):
@@ -404,31 +412,35 @@ class MenuScene(Scene):
 
                 if self.btnControls.button_clicked(event):
                     self.SwitchToScene(ControlsScene(self.screen, self.board))
-                    
-    
+
     def Render(self):
         self.Background()
         bg = pygame.Surface(self.SCREEN_SIZE)
         bg.set_alpha(200)
-        pygame.draw.rect(bg, COLORS['BLACK'], (0,0,self.WIDTH,self.HEIGHT))
-        self.screen.blit(bg, (0,0))
+        pygame.draw.rect(bg, COLORS['BLACK'], (0, 0, self.WIDTH, self.HEIGHT))
+        self.screen.blit(bg, (0, 0))
 
         # Show title
         lblTitle = Text('2048 in Python!', fontcolor=COLORS['LIGHT_GRAY'])
         lblTitle.center(self.WIDTH//2, (self.TILE_SIZE//2) + 20)
         lblTitle.draw(self.screen)
 
-        lblHighscore = Text(f'Highscore: {self.board.highscore}', fontcolor=COLORS['LIGHT_GRAY'], fontsize=55)
+        lblHighscore = Text(
+            f'Highscore: {self.board.highscore}', fontcolor=COLORS['LIGHT_GRAY'], fontsize=55)
         lblHighscore.center(self.WIDTH//2, self.HEIGHT//5+55)
         lblHighscore.draw(self.screen)
 
         # Show New game Button
-        self.btnNewGame.draw(self.screen, (self.WIDTH//2, self.HEIGHT//2), width=self.TILE_SIZE*3.5, height=75)
+        self.btnNewGame.draw(
+            self.screen, (self.WIDTH//2, self.HEIGHT//2), width=self.TILE_SIZE*3.5, height=75)
         # Show Continue Game Button
-        self.btnContinueGame.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE), width=self.TILE_SIZE*3.5, height=75)
+        self.btnContinueGame.draw(
+            self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE), width=self.TILE_SIZE*3.5, height=75)
         # Show Controls Button
-        self.btnControls.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE*2), width=self.TILE_SIZE*3.5, height=75)
-   
+        self.btnControls.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2) +
+                                            self.TILE_SIZE*2), width=self.TILE_SIZE*3.5, height=75)
+
+
 class GameScene(Scene):
     def __init__(self, screen, board):
         Scene.__init__(self, screen)
@@ -458,24 +470,25 @@ class GameScene(Scene):
                 self.SwitchToScene(EndScene(self.screen, self.board))
                 if self.board.can_move():
                     self.board.endless = True
-                    
 
     def do_shortcut(self, event):
         """Find the the key/mod combination in the dictionary and execute the cmd."""
         k = event.key
         m = event.mod
         if (k, m) in self.shortcuts:
-            exec(self.shortcuts[(k , m)])
+            exec(self.shortcuts[(k, m)])
         elif (k) in self.shortcuts:
             exec(self.shortcuts[k])
-    
+
     def Update(self):
         pass
-    
+
     def Render(self):
-        pygame.draw.rect(self.screen, COLORS['BLACK'], (0,0, self.WIDTH, self.HEIGHT)) # Background
-        pygame.draw.rect(self.screen, COLORS['DARK_GRAY'], (10,30+self.TILE_SIZE, self.WIDTH-20, self.HEIGHT-40-self.TILE_SIZE)) # Tile background
-        tempBoard = self.board.tiles.copy().reshape(self.board.width,self.board.height) 
+        pygame.draw.rect(
+            self.screen, COLORS['BLACK'], (0, 0, self.WIDTH, self.HEIGHT))  # Background
+        pygame.draw.rect(self.screen, COLORS['DARK_GRAY'], (
+            10, 30+self.TILE_SIZE, self.WIDTH-20, self.HEIGHT-40-self.TILE_SIZE))  # Tile background
+        tempBoard = self.board.tiles.copy().reshape(self.board.width, self.board.height)
 
         # Display the tiles
         for c in range(self.board.width):
@@ -485,31 +498,40 @@ class GameScene(Scene):
                 if tempBoard[r][c] >= self.board.endTile:
                     color = 'MAX'
                     fontSize = 45
-                pygame.draw.rect(self.screen, COLORS[f'{color}'], ((20)+(c*self.TILE_SIZE)+(c*10),(40+self.TILE_SIZE)+(r*self.TILE_SIZE)+(r*10), self.TILE_SIZE, self.TILE_SIZE))
+                pygame.draw.rect(self.screen, COLORS[f'{color}'], ((20)+(c*self.TILE_SIZE)+(
+                    c*10), (40+self.TILE_SIZE)+(r*self.TILE_SIZE)+(r*10), self.TILE_SIZE, self.TILE_SIZE))
                 if tempBoard[r][c] > 0:
-                    label = Text(f'{tempBoard[r][c]}', fontcolor=COLORS['BLACK'], fontsize=fontSize)
-                    label.center(((20)+(c*self.TILE_SIZE)+(c*10))+(self.TILE_SIZE//2), ((40+self.TILE_SIZE)+(r*self.TILE_SIZE)+(r*10))+(self.TILE_SIZE//2))
+                    label = Text(
+                        f'{tempBoard[r][c]}', fontcolor=COLORS['BLACK'], fontsize=fontSize)
+                    label.center(((20)+(c*self.TILE_SIZE)+(c*10))+(self.TILE_SIZE//2),
+                                 ((40+self.TILE_SIZE)+(r*self.TILE_SIZE)+(r*10))+(self.TILE_SIZE//2))
                     label.draw(self.screen)
 
         # Display the score
         if self.board.score > self.board.highscore:
             self.board.highscore = self.board.score
 
-        lblScore = Text(f'Score: {self.board.score}',pos=(20, self.TILE_SIZE), fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
+        lblScore = Text(f'Score: {self.board.score}', pos=(
+            20, self.TILE_SIZE), fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
         lblScore.draw(self.screen)
-        lblHighscore = Text(f'Highscore: {self.board.highscore}',pos=(20, self.TILE_SIZE-25), fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
+        lblHighscore = Text(f'Highscore: {self.board.highscore}', pos=(
+            20, self.TILE_SIZE-25), fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
         lblHighscore.draw(self.screen)
 
         # Display Controls
-        undo = Text(f'Undo: CTRL + Z',pos=((self.WIDTH//2)+35,self.TILE_SIZE), fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
+        undo = Text(f'Undo: CTRL + Z', pos=((self.WIDTH//2)+35,
+                                            self.TILE_SIZE), fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
         undo.draw(self.screen)
-        restart = Text(f'Main Menu: CTRL + M',pos=((self.WIDTH//2)+35,self.TILE_SIZE-25), fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
+        restart = Text(f'Main Menu: CTRL + M', pos=((self.WIDTH//2)+35,
+                                                    self.TILE_SIZE-25), fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
         restart.draw(self.screen)
 
         # Display the Game title
-        title = Text(f'2048 in Python!',pos=(20,20), fontcolor=COLORS['LIGHT_GRAY'])
+        title = Text(f'2048 in Python!', pos=(20, 20),
+                     fontcolor=COLORS['LIGHT_GRAY'])
         title.draw(self.screen)
-        
+
+
 class EndScene(Scene):
     def __init__(self, screen, board):
         Scene.__init__(self, screen)
@@ -528,31 +550,34 @@ class EndScene(Scene):
                     if self.btnContinue.button_clicked(event):
                         self.board.save_game()
                         self.SwitchToScene(GameScene(self.screen, self.board))
-                        
 
-    
     def Render(self):
         # Tint the background
         GameScene(self.screen, self.board).Render()
         bg = pygame.Surface(self.SCREEN_SIZE)
         bg.set_alpha(200)
-        pygame.draw.rect(bg, COLORS['BLACK'], (0,0,self.WIDTH,self.HEIGHT))
-        self.screen.blit(bg, (0,0))
+        pygame.draw.rect(bg, COLORS['BLACK'], (0, 0, self.WIDTH, self.HEIGHT))
+        self.screen.blit(bg, (0, 0))
 
         # Display game over text
         lblGameOver = Text("Game Over!", fontcolor=COLORS['LIGHT_GRAY'])
-        lblScore = Text(f"Score: {self.board.score}", fontcolor=COLORS['LIGHT_GRAY'], fontsize=55)
-        lblHighscore = Text(f"Highscore: {self.board.highscore}", fontcolor=COLORS['LIGHT_GRAY'], fontsize=55)
-        labels = [lblGameOver,lblScore,lblHighscore]
+        lblScore = Text(f"Score: {self.board.score}",
+                        fontcolor=COLORS['LIGHT_GRAY'], fontsize=55)
+        lblHighscore = Text(
+            f"Highscore: {self.board.highscore}", fontcolor=COLORS['LIGHT_GRAY'], fontsize=55)
+        labels = [lblGameOver, lblScore, lblHighscore]
 
         for i in range(len(labels)):
             labels[i].center(self.WIDTH//2, self.TILE_SIZE+(i*50))
             labels[i].draw(self.screen)
 
         # Display play again button
-        self.btnMainMenu.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE), width=self.TILE_SIZE*3.5, height=75)
+        self.btnMainMenu.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2) +
+                                            self.TILE_SIZE), width=self.TILE_SIZE*3.5, height=75)
         if self.board.endless:
-            self.btnContinue.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE*2), width=self.TILE_SIZE*3.5, height=75)
+            self.btnContinue.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2) +
+                                                self.TILE_SIZE*2), width=self.TILE_SIZE*3.5, height=75)
+
 
 class ControlsScene(Scene):
     def __init__(self, screen, board):
@@ -566,27 +591,29 @@ class ControlsScene(Scene):
                 if self.btnMainMenu.button_clicked(event):
                     self.board.restart()
                     self.SwitchToScene(MenuScene(self.screen, self.board))
-    
+
     def Render(self):
         self.Background()
         # Tint the background
         bg = pygame.Surface(self.SCREEN_SIZE)
         bg.set_alpha(200)
-        pygame.draw.rect(bg, COLORS['BLACK'], (0,0,self.WIDTH,self.HEIGHT))
-        self.screen.blit(bg, (0,0))
+        pygame.draw.rect(bg, COLORS['BLACK'], (0, 0, self.WIDTH, self.HEIGHT))
+        self.screen.blit(bg, (0, 0))
         lblTitle = Text('2048 in Python!', fontcolor=COLORS['LIGHT_GRAY'])
         lblTitle.center(self.WIDTH//2, (self.TILE_SIZE//2) + 20)
         lblTitle.draw(self.screen)
 
         # Display game over text
-        labels = ["[ W | Up-Arrow ] = Move Up", "[ S | Down-Arrow ] = Move Down", 
-                    "[ A | Left-Arrow ] = Move Left", "[ D | Right-Arrow ] = Move Right",
-                    "[ CTRL + Z ] = Undo", "[ CTRL + M ] = Main Menu"]
+        labels = ["[ W | Up-Arrow ] = Move Up", "[ S | Down-Arrow ] = Move Down",
+                  "[ A | Left-Arrow ] = Move Left", "[ D | Right-Arrow ] = Move Right",
+                  "[ CTRL + Z ] = Undo", "[ CTRL + M ] = Main Menu"]
         # "[ CTRL + SHIFT + A ] = Auto"
         for line in range(len(labels)):
-            label = Text(labels[line], fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
+            label = Text(
+                labels[line], fontcolor=COLORS['LIGHT_GRAY'], fontsize=25)
             label.center(self.WIDTH//2, (self.HEIGHT//3)+(line*25))
             label.draw(self.screen)
 
         # Display main menu button
-        self.btnMainMenu.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2)+self.TILE_SIZE*2), width=self.TILE_SIZE*3.5, height=75)
+        self.btnMainMenu.draw(self.screen, (self.WIDTH//2, (self.HEIGHT//2) +
+                                            self.TILE_SIZE*2), width=self.TILE_SIZE*3.5, height=75)

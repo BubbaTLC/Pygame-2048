@@ -1,6 +1,8 @@
 import pygame
-from ui import * # pylint: disable=unused-wildcard-import
+from ui import *  # pylint: disable=unused-wildcard-import
 # pylint: disable=no-member
+
+
 class App:
     """Create a single-window app with multiple scenes."""
 
@@ -25,7 +27,7 @@ class App:
 
         while activeScene != None:
             pressedKeys = pygame.key.get_pressed()
-            
+
             # Event filtering
             filteredEvents = []
             for event in pygame.event.get():
@@ -37,16 +39,16 @@ class App:
                     activeScene.Terminate()
                 else:
                     filteredEvents.append(event)
-            
+
             activeScene.ProcessInput(filteredEvents, pressedKeys)
             activeScene.Update()
             activeScene.Render()
             activeScene = activeScene.next
             pygame.display.flip()
             clock.tick(60)
-            
 
         pygame.quit()
+
 
 if __name__ == '__main__':
     App().run()
