@@ -33,8 +33,6 @@ class Board:
         for i in range(len(choice)):
             self.tiles[i] = choice[i]
         np.random.shuffle(self.tiles)
-        # self.tiles[0] = 1024
-        # self.tiles[1] = 1024
 
         self.width = width
         self.height = height
